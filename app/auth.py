@@ -1,5 +1,5 @@
 """Login e logout da equipe."""
-from flask import Blueprint, flash, redirect, render_template, request, url_for
+from flask import Blueprint, flash, redirect, render_template, request, session, url_for
 from flask_login import current_user, login_required, login_user, logout_user
 
 from datetime import datetime
@@ -29,6 +29,7 @@ def login():
             limpar(chave)
             usuario.ultimo_acesso_em = datetime.now()
             db.session.commit()
+            session.permanent = True  # expira em 8 horas (PERMANENT_SESSION_LIFETIME)
             login_user(usuario)
             if usuario.trocar_senha:
                 flash("Sua senha é provisória. Crie uma senha sua para continuar.", "aviso")

@@ -178,4 +178,8 @@ Desligue o sistema, descompacte o `.zip` do backup dentro da pasta do sistema (e
 - Cada pessoa da equipe tem usuário próprio; o sistema registra quem validou cada comprovante e quem marcou cada presença.
 - Senhas erradas: 5 tentativas bloqueiam o acesso por 15 minutos (equipe e associados).
 - No celular, só a carteirinha do próprio associado fica guardada para uso sem internet, e ela é apagada quando ele sai.
+- O login (da equipe e do associado) expira em 8 horas. No computador da sede, clique em **Sair** ao terminar.
+- O termo (versão 1.1) informa que os dados ficam num serviço de hospedagem fora do Brasil (LGPD, art. 33).
+- Bibliotecas com versão fixa e sem vulnerabilidades conhecidas (verificado com `pip-audit`); código verificado com `bandit`.
+- No PythonAnywhere, ative a verificação em duas etapas da conta e mapeie como arquivos estáticos **só** a pasta `app/static` (nunca a `instance`).
 - O texto do termo fica em `app/termo.py`. Se a diretoria mudar o texto, aumente a `VERSAO` e todos os associados precisarão aceitar de novo.

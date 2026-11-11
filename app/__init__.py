@@ -4,6 +4,7 @@ Projeto de Extensão UniFECAF (ADS) para a Associação Vila das Artes, Embu das
 """
 import os
 import secrets
+from datetime import timedelta
 
 from flask import Flask, abort, request, session
 from flask_login import LoginManager
@@ -40,6 +41,7 @@ def create_app(config=None):
         SESSION_COOKIE_SAMESITE="Lax",
         WTF_CSRF_ENABLED=True,
         MAX_CONTENT_LENGTH=8 * 1024 * 1024,  # comprovantes de até 8 MB
+        PERMANENT_SESSION_LIFETIME=timedelta(hours=8),  # login vale no máximo 8 horas
     )
     if config:
         app.config.update(config)
@@ -190,7 +192,8 @@ def _configurar_csrf(app):
             return
         if request.method == "POST":
             enviado = request.form.get("_csrf")
-            if not enviado or enviado != session.get("_csrf"):
+            esperado = session.get("_csrf")
+            if not enviado or not esperado or not secrets.compare_digest(enviado, esperado):
                 abort(400, "Formulário expirado. Recarregue a página e tente de novo.")
 
 

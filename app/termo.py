@@ -4,7 +4,7 @@ Se o texto mudar, aumente VERSAO: o sistema pede um novo aceite a todos os assoc
 Sugestão: peça para a diretoria revisar o texto antes de colocar o sistema em uso.
 """
 
-VERSAO = "1.0"
+VERSAO = "1.1"  # 1.1: incluída a seção "Onde os dados ficam guardados" (LGPD, art. 33)
 TITULO = "Termo de consentimento para uso de dados pessoais e imagem"
 
 SECOES = [
@@ -24,6 +24,11 @@ SECOES = [
     ("Com quem compartilhamos",
      "Somente com órgãos públicos de habitação, quando for necessário para o programa em que você está inscrito. "
      "Seus dados nunca serão vendidos ou cedidos para propaganda."),
+    ("Onde os dados ficam guardados",
+     "Num serviço de hospedagem na internet contratado pela associação (PythonAnywhere), em servidores fora do "
+     "Brasil. O acesso é protegido por senha e a conexão é segura (https). Esse serviço apenas guarda os dados "
+     "para a associação e não pode usá-los para nenhum outro fim. Ao aceitar este termo, você concorda com essa "
+     "guarda fora do país."),
     ("Quem pode ver",
      "Apenas a equipe autorizada da associação, com usuário e senha. Você vê somente as suas próprias informações."),
     ("Por quanto tempo",

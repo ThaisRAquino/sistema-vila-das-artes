@@ -129,6 +129,7 @@ def entrar():
         associado = buscar_por_cpf(request.form.get("cpf"))
         if associado and associado.conferir_senha(request.form.get("senha", "")):
             limpar(chave)
+            session.permanent = True
             session[CHAVE] = associado.id
             return redirect(url_for("area.inicio"))
         registrar_falha(chave)
@@ -166,6 +167,7 @@ def primeiro_acesso():
             associado.codigo_expira_em = None
             db.session.commit()
             limpar(chave)
+            session.permanent = True
             session[CHAVE] = associado.id
             flash("Senha criada! Agora leia e aceite o termo de uso dos dados.", "ok")
             return redirect(url_for("area.termo"))
