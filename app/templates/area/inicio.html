@@ -90,5 +90,10 @@
 
 <div class="nota" data-dica-iphone hidden><b>Quer o app no iPhone?</b> No Safari, toque em Compartilhar (o quadrado com a seta) e depois em <b>Adicionar à Tela de Início</b>.</div>
 
+<section class="painel" style="display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap">
+  <div style="font-size: 14px; line-height: 1.45"><b>Fale com a associação</b><br>WhatsApp {{ contato.WHATSAPP }}<br><span class="sub" style="margin:0">{{ contato.EMAIL }}</span></div>
+  <a class="btn btn-whats" href="{{ contato.WHATSAPP_LINK }}" target="_blank" rel="noopener">Abrir WhatsApp</a>
+</section>
+
 <p class="nota">Termo aceito em {{ a.termo_aceito_em|data }} (versão {{ a.termo_versao }}). <a href="{{ url_for('area.termo') }}">Ver ou mudar autorizações</a>.</p>
 {% endblock %}

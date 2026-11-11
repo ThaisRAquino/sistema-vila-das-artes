@@ -13,5 +13,6 @@
   <button class="btn btn-primario" type="submit">Entrar</button>
   <a href="{{ url_for('area.primeiro_acesso') }}" style="text-align: center">Primeiro acesso ou esqueci a senha</a>
 </form>
+<p class="nota">Dúvidas ou esqueceu o CPF cadastrado? <a href="{{ contato.WHATSAPP_LINK }}" target="_blank" rel="noopener">WhatsApp {{ contato.WHATSAPP }}</a></p>
 <p class="nota">É da equipe da associação? <a href="{{ url_for('auth.login') }}">Entre por aqui</a>.</p>
 {% endblock %}

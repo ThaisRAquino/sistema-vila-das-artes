@@ -13,5 +13,6 @@
   <div class="campo"><label for="confirmar">Repita a senha</label><input id="confirmar" name="confirmar" type="password" autocomplete="new-password" minlength="6" required></div>
   <button class="btn btn-primario" type="submit">Criar senha e entrar</button>
   <a href="{{ url_for('area.entrar') }}" style="text-align: center">Já tenho senha</a>
+  <p class="nota" style="margin: 0; text-align: center">Não recebeu o código? Fale com a associação no <a href="{{ contato.WHATSAPP_LINK }}" target="_blank" rel="noopener">WhatsApp {{ contato.WHATSAPP }}</a>.</p>
 </form>
 {% endblock %}

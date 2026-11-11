@@ -22,7 +22,8 @@
       <img src="{{ url_for('static', filename='img/logo.jpg') }}" alt="Logo da Associação Vila das Artes">
       <div>
         <h1>Recibo nº {{ m.numero_recibo }}</h1>
-        <div class="sub">Associação Vila das Artes · CNPJ 03.094.171/0001-15 · Rua Juquitiba, 92 – Jardim Nayara, Embu das Artes/SP</div>
+        <div class="sub">{{ contato.NOME }} · CNPJ {{ contato.CNPJ }} · {{ contato.ENDERECO }}</div>
+        <div class="sub">WhatsApp {{ contato.WHATSAPP }} · {{ contato.EMAIL }}</div>
       </div>
     </header>
     <div class="valor">{{ m.valor|moeda }}</div>

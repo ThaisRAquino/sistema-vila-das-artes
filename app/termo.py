@@ -4,13 +4,15 @@ Se o texto mudar, aumente VERSAO: o sistema pede um novo aceite a todos os assoc
 Sugestão: peça para a diretoria revisar o texto antes de colocar o sistema em uso.
 """
 
+from . import contato
+
 VERSAO = "1.1"  # 1.1: incluída a seção "Onde os dados ficam guardados" (LGPD, art. 33)
 TITULO = "Termo de consentimento para uso de dados pessoais e imagem"
 
 SECOES = [
     ("Quem cuida dos seus dados",
-     "Associação Vila das Artes, CNPJ 03.094.171/0001-15, Rua Juquitiba, 92 – Jardim Nayara, Embu das Artes/SP. "
-     "A diretoria é a responsável pelo cadastro."),
+     f"{contato.NOME}, CNPJ {contato.CNPJ}, {contato.ENDERECO}. A diretoria é a responsável pelo cadastro. "
+     f"Contato: WhatsApp {contato.WHATSAPP} e e-mail {contato.EMAIL}."),
     ("Quais dados guardamos",
      "Os dados da sua ficha de inscrição (identificação, contato, família, trabalho, renda e moradia), as cópias dos "
      "documentos, os pagamentos das mensalidades, as presenças nas assembleias e a foto que você enviar."),
@@ -36,8 +38,8 @@ SECOES = [
      "contas e obrigações legais; depois os dados são apagados."),
     ("Seus direitos",
      "Você pode ver, corrigir e pedir a exclusão dos seus dados e da sua foto, e pode cancelar esta autorização a "
-     "qualquer momento, na sede ou pelo WhatsApp da associação. Cancelar a autorização da foto não cancela a sua "
-     "associação."),
+     f"qualquer momento, na sede, pelo WhatsApp {contato.WHATSAPP} ou pelo e-mail {contato.EMAIL}. Cancelar a "
+     "autorização da foto não cancela a sua associação."),
 ]
 
 ACEITE_DADOS = "Li e aceito o uso dos meus dados pessoais pela Associação Vila das Artes, conforme este termo."

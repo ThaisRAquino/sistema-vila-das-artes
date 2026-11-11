@@ -200,6 +200,8 @@ def associados_em_alerta():
 # ---------- mensagens de WhatsApp ----------
 
 def mensagem_whatsapp(associado, motivo):
+    from . import contato
+
     primeiro = associado.nome.split()[0]
     proxima = proxima_assembleia().strftime("%d/%m")
     s = situacao(associado)
@@ -210,12 +212,13 @@ def mensagem_whatsapp(associado, motivo):
         ),
         "mensalidade": (
             f"Olá, {primeiro}! Aqui é da Associação Vila das Artes. Identificamos {s['atrasadas']} mensalidade(s) em aberto. "
-            f"Envie o comprovante pelo sistema ou traga na sede para a equipe validar. Sócio nº {associado.numero_socio}."
+            f"Envie o comprovante pelo sistema ou traga na sede para a equipe conferir. Sócio nº {associado.numero_socio}. "
+            f"Dúvidas: WhatsApp {contato.WHATSAPP}."
         ),
         "documento": (
             f"Olá, {primeiro}! Aqui é da Associação Vila das Artes. Falta entregar documento(s) no seu cadastro: "
             + ", ".join(d.tipo for d in associado.documentos if d.status == "pendente")
-            + f". Traga na sede de segunda a sábado, das 8h às 17h. Sócio nº {associado.numero_socio}."
+            + f". Traga na sede {contato.HORARIO_SEDE}. Sócio nº {associado.numero_socio}."
         ),
         "assembleia": (
             f"Olá, {primeiro}! Lembrete da Associação Vila das Artes: a próxima assembleia é no domingo, {proxima}. "
@@ -229,7 +232,8 @@ def mensagem_whatsapp(associado, motivo):
         textos["acesso"] = (
             f"Olá, {primeiro}! A Associação Vila das Artes agora tem a área do associado. Acesse {link}, "
             f"digite seu CPF e o código {associado.codigo_acesso} (vale por 7 dias) e crie sua senha. "
-            "Lá você vê sua carteirinha, mensalidades e presenças, e pode enviar sua foto."
+            "Lá você vê sua carteirinha, mensalidades e presenças, e pode enviar sua foto. "
+            f"Dúvidas: WhatsApp {contato.WHATSAPP}."
         )
     return textos.get(motivo, textos["assembleia"])
 

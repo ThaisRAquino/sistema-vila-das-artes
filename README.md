@@ -140,7 +140,7 @@ O sistema precisa de uma hospedagem com **https** (sem https, a câmera e o app 
 
 O endereço fica `https://NOME.pythonanywhere.com` (ex.: `viladasartes.pythonanywhere.com`), já com https. No plano gratuito: 1 site, 512 MB de espaço, sem tarefas agendadas e o site **precisa ser renovado uma vez por mês** (botão na aba *Web*). No plano pago (Developer) há 5 GB e tarefas agendadas.
 
-1. Crie a conta em pythonanywhere.com com o e-mail da associação. O nome de usuário vira o endereço.
+1. Crie a conta em pythonanywhere.com com o e-mail oficial da associação (viladasartes.vda2022@gmail.com). O nome de usuário vira o endereço.
 2. Abra um **Bash console** e rode:
    ```
    git clone https://github.com/USUARIO/sistema-vila-das-artes.git
@@ -182,4 +182,4 @@ Desligue o sistema, descompacte o `.zip` do backup dentro da pasta do sistema (e
 - O termo (versão 1.1) informa que os dados ficam num serviço de hospedagem fora do Brasil (LGPD, art. 33).
 - Bibliotecas com versão fixa e sem vulnerabilidades conhecidas (verificado com `pip-audit`); código verificado com `bandit`.
 - No PythonAnywhere, ative a verificação em duas etapas da conta e mapeie como arquivos estáticos **só** a pasta `app/static` (nunca a `instance`).
-- O texto do termo fica em `app/termo.py`. Se a diretoria mudar o texto, aumente a `VERSAO` e todos os associados precisarão aceitar de novo.
+- O texto do termo fica em `app/termo.py`. O contato oficial (WhatsApp e e-mail) fica em `app/contato.py` e aparece no termo, na área do associado, no recibo e nas mensagens. Se a diretoria mudar o texto, aumente a `VERSAO` e todos os associados precisarão aceitar de novo.

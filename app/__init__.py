@@ -80,6 +80,9 @@ def create_app(config=None):
 
     app.before_request(conferir_permissao)
     app.jinja_env.globals["pode"] = pode
+    from . import contato
+
+    app.jinja_env.globals["contato"] = contato
 
     @app.before_request
     def exigir_troca_de_senha():
