@@ -1,0 +1,270 @@
+{% extends "base.html" %}
+{% from "_macros.html" import whatsapp, etiqueta_mensalidade, etiqueta_situacao %}
+{% block titulo %}{{ a.nome }}{% endblock %}
+{% block conteudo %}
+<a href="{{ url_for('associados.lista') }}" style="font-size: 14px; text-decoration: none">← Voltar para Associados</a>
+<div class="cabecalho">
+  <div class="titular">
+    <div class="avatar" aria-hidden="true">{% if a.foto %}<img src="{{ url_for('associados.foto', associado_id=a.id) }}?v={{ a.foto_enviada_em.timestamp()|int }}" alt="" style="width: 100%; height: 100%; object-fit: cover; border-radius: inherit">{% else %}{{ a.iniciais }}{% endif %}</div>
+    <div>
+      <h1>{{ a.nome }}</h1>
+      <div class="sub">Sócio nº <b style="color: var(--primaria)">{{ a.numero_socio }}</b> · inscrito em {{ a.data_inscricao|data }}</div>
+    </div>
+  </div>
+  <div class="acoes">
+    {{ whatsapp(a, 'assembleia', 'Lembrete da assembleia', 'btn btn-whats') }}
+    {% if pode('conferencia') %}<a class="btn" href="{{ url_for('associados.editar', associado_id=a.id) }}">Editar ficha</a>{% endif %}
+  </div>
+</div>
+
+{% if a.situacao == 'desligado' %}
+{% set ultimo = a.historico_situacao[0] if a.historico_situacao else none %}
+<section class="painel" style="background: var(--risco-fundo); display: flex; flex-wrap: wrap; gap: 14px; align-items: center; justify-content: space-between; margin-bottom: 18px">
+  <div><b style="color: var(--risco-texto)">Desligado(a) por decisão da diretoria</b>
+    {% if ultimo %}<div style="font-size: 14px">{{ ultimo.data_decisao|data }} · {{ ultimo.motivo }}{% if ultimo.observacao %} · {{ ultimo.observacao }}{% endif %}{% if ultimo.registrado_por %} · registrado por {{ ultimo.registrado_por.nome }}{% endif %}</div>{% endif %}
+    <div class="sub" style="margin: 2px 0 0">Não aparece nas listas, não gera mensalidade e não acessa a área do associado. O histórico fica guardado.</div></div>
+  {% if current_user.presidente %}
+  <form method="post" action="{{ url_for('associados.reativar', associado_id=a.id) }}">
+    <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+    <button class="btn btn-primario" type="submit">Reativar associado</button>
+  </form>
+  {% endif %}
+</section>
+{% endif %}
+
+{% set s = situacao(a) %}
+<section class="painel" style="display: flex; flex-wrap: wrap; gap: 18px; align-items: center; justify-content: space-between; {{ 'background: var(--risco-fundo)' if s.nivel == 'risco' else ('background: var(--pend-fundo)' if s.nivel == 'atencao' else '') }}">
+  <div style="display: flex; gap: 14px; align-items: center; flex-wrap: wrap">
+    {{ etiqueta_situacao(s) }}
+    <span style="font-size: 14px"><b>Faltas seguidas:</b> {{ s.faltas }} de 3 · <b>Mensalidades em aberto seguidas:</b> {{ s.atrasadas }} de 3</span>
+  </div>
+  <div class="linha-acoes">
+    {% if s.faltas %}{{ whatsapp(a, 'falta', 'Avisar sobre faltas') }}{% endif %}
+    {% if s.atrasadas %}{{ whatsapp(a, 'mensalidade', 'Avisar sobre mensalidades') }}{% endif %}
+    {% if a.docs_entregues < a.docs_total %}{{ whatsapp(a, 'documento', 'Avisar sobre documentos') }}{% endif %}
+  </div>
+  {% if s.nivel == 'risco' %}<p class="nota" style="width: 100%; margin: 0; background: #fff">Pela regra da associação, pode ser desligado. O sistema só alerta: a decisão é da diretoria.</p>{% endif %}
+</section>
+
+<section class="painel" id="acesso" style="margin-bottom: 18px">
+  <h2>Área do associado</h2>
+  <div style="display: flex; flex-wrap: wrap; gap: 18px; align-items: flex-start">
+    <div class="lista-linhas" style="flex: 1 1 300px">
+      <div><span>Acesso</span>{% if a.senha_hash %}<b style="color: var(--ok-texto)">Senha criada</b>{% elif a.codigo_acesso %}<span>Código enviado, aguardando o 1º acesso</span>{% else %}<span class="sub" style="margin:0">Ainda não liberado</span>{% endif %}</div>
+      <div><span>Termo de dados</span>{% if a.termo_aceito_em %}<b style="color: var(--ok-texto)">Aceito em {{ a.termo_aceito_em|data }} (v{{ a.termo_versao }})</b>{% else %}<span class="sub" style="margin:0">Não aceito</span>{% endif %}</div>
+      <div><span>Uso da imagem</span>{% if a.imagem_autorizada_em %}<b style="color: var(--ok-texto)">Autorizado em {{ a.imagem_autorizada_em|data }}</b>{% else %}<span class="sub" style="margin:0">Não autorizado</span>{% endif %}</div>
+      <div><span>Foto</span>{% if a.foto %}<span>Enviada pelo associado em {{ a.foto_enviada_em|data }}</span>{% else %}<span class="sub" style="margin:0">Sem foto</span>{% endif %}</div>
+    </div>
+    {% if pode('conferencia') %}
+    <div class="linha-acoes" style="flex-direction: column; align-items: stretch; gap: 8px; flex: 0 1 300px">
+      <form method="post" action="{{ url_for('associados.gerar_acesso', associado_id=a.id) }}">
+        <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+        <button class="btn btn-primario" type="submit" style="width: 100%">{{ 'Gerar código para trocar a senha' if a.senha_hash else 'Gerar código de 1º acesso' }}</button>
+      </form>
+      {% if a.codigo_acesso %}
+        <div class="nota" style="margin: 0">Código atual: <b style="letter-spacing: .15em">{{ a.codigo_acesso }}</b> · vale até {{ a.codigo_expira_em|data }}</div>
+        {{ whatsapp(a, 'acesso', 'Enviar código pelo WhatsApp', 'btn btn-whats') }}
+      {% endif %}
+      {% if a.foto %}
+      <form method="post" action="{{ url_for('associados.remover_foto', associado_id=a.id) }}">
+        <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+        <button class="btn btn-pequeno btn-perigo" type="submit" style="width: 100%">Remover foto (imprópria ou a pedido)</button>
+      </form>
+      {% endif %}
+    </div>
+    {% endif %}
+  </div>
+  <p class="nota" style="margin: 10px 0 0">A foto é enviada pelo próprio associado, depois de aceitar o termo e autorizar o uso da imagem.</p>
+</section>
+
+<div class="grade">
+  <section class="painel">
+    <h2>Categoria e nº de sócio</h2>
+    {% if pode('conferencia') %}
+    <form method="post" action="{{ url_for('associados.alterar_categoria', associado_id=a.id) }}" class="alternar" aria-label="Categoria">
+      <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+      <button type="submit" name="categoria" value="regular" class="{{ 'ativo' if not a.mutirante }}" aria-pressed="{{ 'false' if a.mutirante else 'true' }}">Regular</button>
+      <button type="submit" name="categoria" value="mutirante" class="{{ 'ativo' if a.mutirante }}" aria-pressed="{{ 'true' if a.mutirante else 'false' }}">Mutirante (isento)</button>
+    </form>
+
+    <form method="post" action="{{ url_for('associados.alterar_numero', associado_id=a.id) }}" class="alterar-numero" style="margin-top: 16px">
+      <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+      <div class="campo"><label for="numero_socio">Novo nº de sócio</label><input id="numero_socio" name="numero_socio" value="{{ a.numero_socio }}" inputmode="numeric" required></div>
+      <div class="campo"><label for="motivo">Motivo (opcional)</label><input id="motivo" class="motivo" name="motivo" placeholder="Ex.: corrigir duplicidade"></div>
+      <button class="btn btn-pequeno" type="submit">Alterar nº</button>
+    </form>
+    {% else %}
+    <p style="margin: 0"><b>{{ 'Mutirante (isento)' if a.mutirante else 'Regular' }}</b> · nº {{ a.numero_socio }}</p>
+    {% endif %}
+    {% if a.historico_numero %}
+    <div class="lista-linhas" style="margin-top: 10px">
+      {% for h in a.historico_numero %}
+      <div><span>{{ h.numero_anterior }} → <b>{{ h.numero_novo }}</b>{% if h.motivo %} · {{ h.motivo }}{% endif %}</span><span class="sub" style="margin:0">{{ h.alterado_por.nome if h.alterado_por else '' }} · {{ h.alterado_em|data }}</span></div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <p class="nota" style="margin-top: 12px">O sistema não aceita número repetido e registra quem alterou e quando.</p>
+    {% endif %}
+
+    <h2 style="margin-top: 20px">Carteirinha (QR)</h2>
+    <div class="qr">
+      <img src="{{ url_for('associados.qr', associado_id=a.id) }}" alt="QR da carteirinha do sócio {{ a.numero_socio }}">
+      <div style="font-size: 13px; line-height: 1.5">
+        Código: <b>{{ a.qr_codigo }}</b><br>
+        Usado para marcar presença nas assembleias.
+        {% if pode('conferencia') %}
+        <form method="post" action="{{ url_for('associados.renovar_qr', associado_id=a.id) }}" style="margin-top: 8px">
+          <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+          <button class="btn btn-pequeno" type="submit" title="Use se a carteirinha foi perdida; o QR antigo deixa de valer">Gerar novo QR</button>
+        </form>
+        {% endif %}
+      </div>
+    </div>
+  </section>
+
+  <section class="painel" id="documentos">
+    <h2>Documentos · {{ a.docs_entregues }} de {{ a.docs_total }}</h2>
+    <div class="lista-linhas">
+      {% for d in a.documentos %}
+      <div>
+        <span>{{ d.tipo }}{% if d.conferido_em %}<br><span class="sub" style="margin:0">conferido por {{ d.conferido_por.nome if d.conferido_por else '' }} em {{ d.conferido_em|data }}</span>{% endif %}</span>
+        {% if not pode('conferencia') %}
+          {% if d.status == 'entregue' %}<span class="etiqueta ok">● Entregue</span>{% else %}<span class="etiqueta pendente">◐ Pendente</span>{% endif %}
+        {% else %}
+        <form method="post" action="{{ url_for('associados.marcar_documento', associado_id=a.id, documento_id=d.id) }}">
+          <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+          {% if d.status == 'entregue' %}
+            <button class="etiqueta ok" style="border: 0; cursor: pointer" type="submit" title="Marcar como pendente">● Entregue</button>
+          {% else %}
+            <button class="etiqueta pendente" style="border: 0; cursor: pointer" type="submit" title="Marcar como entregue">◐ Pendente</button>
+          {% endif %}
+        </form>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+    <p class="nota" style="margin-top: 12px">Clique na etiqueta para marcar como entregue ou pendente. O sistema guarda quem conferiu.</p>
+  </section>
+
+  <section class="painel">
+    <h2>Dados do titular</h2>
+    <div class="dados">
+      <div><span class="rotulo">CPF</span>{{ a.cpf|cpf if pode('conferencia') else a.cpf|cpf_mascarado }}</div>
+      <div><span class="rotulo">Nascimento</span>{{ a.data_nascimento|data or '–' }}</div>
+      <div><span class="rotulo">Celular</span>{{ a.celular or '–' }}</div>
+      <div><span class="rotulo">Estado civil</span>{{ (a.estado_civil or '–')|capitalize }}</div>
+      <div><span class="rotulo">Profissão</span>{{ a.profissao or '–' }}</div>
+      {% if pode('conferencia') %}<div><span class="rotulo">Renda familiar</span>{{ a.renda_familiar_total|moeda or '–' }}</div>{% endif %}
+      <div style="grid-column: 1 / -1"><span class="rotulo">Endereço</span>{% set rua = [a.rua, a.numero]|select|join(', ') %}{{ [rua, a.bairro, (a.cidade or '') ~ '/' ~ (a.uf or '')]|select|join(' · ') }}</div>
+      <div><span class="rotulo">Moradia</span>{{ (a.tipo_residencia or '–')|capitalize }}{% if a.valor_aluguel %} · {{ a.valor_aluguel|moeda }}{% endif %}</div>
+      <div><span class="rotulo">LGPD</span>{% if a.termo_aceito_em %}Termo aceito no app em {{ a.termo_aceito_em|data }}{% elif a.consentimento_lgpd_em %}Autorizado na ficha em {{ a.consentimento_lgpd_em|data }}{% else %}Sem autorização registrada{% endif %}</div>
+    </div>
+
+    <h2 style="margin-top: 20px" id="familia">Família ({{ a.familiares|length }})</h2>
+    <div class="lista-linhas">
+      {% for f in a.familiares %}
+      <div>
+        <span>{{ f.nome }} <span class="sub" style="margin:0">({{ f.tipo }}{% if f.data_nascimento %}, {{ f.data_nascimento|data }}{% endif %})</span></span>
+        {% if pode('conferencia') %}
+        <form method="post" action="{{ url_for('associados.remover_familiar', associado_id=a.id, familiar_id=f.id) }}">
+          <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+          <button class="btn btn-pequeno btn-perigo" type="submit">Remover</button>
+        </form>
+        {% endif %}
+      </div>
+      {% else %}
+      <div><span class="sub" style="margin:0">Nenhum familiar cadastrado.</span></div>
+      {% endfor %}
+    </div>
+    {% if pode('conferencia') %}
+    <form method="post" action="{{ url_for('associados.adicionar_familiar', associado_id=a.id) }}" class="mini-form">
+      <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+      <select name="tipo" aria-label="Tipo"><option value="cônjuge">Cônjuge</option><option value="dependente">Dependente</option></select>
+      <input name="nome" placeholder="Nome" aria-label="Nome do familiar" required>
+      <input name="data_nascimento" type="date" aria-label="Data de nascimento">
+      <button class="btn btn-pequeno" type="submit">Adicionar</button>
+    </form>
+    {% endif %}
+  </section>
+</div>
+<div class="grade">
+  <section class="painel">
+    <h2>Mensalidades{% if a.mutirante %} <span class="etiqueta info">◆ Mutirante</span>{% endif %}</h2>
+    <div class="lista-linhas">
+      {% for m in a.mensalidades[:8] %}
+      <div>
+        <span>{{ m.mes_ano }}{% if m.status == 'recusada' %}<br><span class="sub" style="margin:0; color: var(--risco-texto)">{{ m.motivo_recusa }}</span>{% endif %}</span>
+        <span style="display: flex; gap: 8px; align-items: center">
+          {{ etiqueta_mensalidade(m) }}
+          {% if m.status == 'paga' %}<a class="btn btn-pequeno" href="{{ url_for('mensalidades.recibo', mensalidade_id=m.id) }}" target="_blank">Recibo</a>{% endif %}
+          {% if m.status == 'em_analise' %}
+          <form method="post" action="{{ url_for('mensalidades.validar', mensalidade_id=m.id) }}">
+            <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+            <input type="hidden" name="voltar" value="{{ url_for('associados.ficha', associado_id=a.id) }}">
+            <button class="btn btn-pequeno btn-ok" type="submit">Validar</button>
+          </form>
+          <a class="btn btn-pequeno" href="{{ url_for('mensalidades.arquivo', mensalidade_id=m.id) }}" target="_blank">Ver</a>
+          {% endif %}
+        </span>
+      </div>
+      {% else %}
+      <div><span class="sub" style="margin:0">Nenhuma mensalidade gerada ainda.</span></div>
+      {% endfor %}
+    </div>
+    <p style="margin: 10px 0 0"><a href="{{ url_for('mensalidades.mes') }}">Registrar comprovante na tela de Mensalidades</a></p>
+  </section>
+
+  <section class="painel">
+    <h2>Presenças nas assembleias</h2>
+    {% set presentes = a.presencas|map(attribute='assembleia_id')|list %}
+    <div class="lista-linhas">
+      {% for asm in assembleias_recentes %}
+      <div><span>{{ asm.data|data }}</span>
+        {% if asm.id in presentes %}<b style="color: var(--ok-texto)">● Presente</b>
+        {% elif not asm.encerrada %}<span class="sub" style="margin:0">Lista aberta</span>
+        {% else %}<b style="color: var(--risco-texto)">○ Falta</b>{% endif %}</div>
+      {% else %}
+      <div><span class="sub" style="margin:0">Nenhuma assembleia registrada desde a inscrição.</span></div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="painel" id="decisao">
+    <h2>Decisões da diretoria</h2>
+    <div class="lista-linhas">
+      {% for h in a.historico_situacao %}
+      <div><span>{{ h.data_decisao|data }} · <b>{{ 'Desligamento' if h.situacao == 'desligado' else 'Reativação' }}</b><br><span class="sub" style="margin:0">{{ h.motivo }}{% if h.observacao %} · {{ h.observacao }}{% endif %}</span></span>
+        <span class="sub" style="margin:0">{{ h.registrado_por.nome if h.registrado_por else '' }}</span></div>
+      {% else %}
+      <div><span class="sub" style="margin:0">Nenhuma decisão registrada.</span></div>
+      {% endfor %}
+    </div>
+    {% if a.situacao == 'ativo' and current_user.presidente %}
+    <details style="margin-top: 12px">
+      <summary style="cursor: pointer; font-weight: 700; color: var(--risco-texto)">Registrar desligamento decidido pela diretoria</summary>
+      <form method="post" action="{{ url_for('associados.desligar', associado_id=a.id) }}" style="display: flex; flex-direction: column; gap: 10px; margin-top: 10px">
+        <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+        <div class="campo"><label for="motivo-desl">Motivo</label>
+          <select id="motivo-desl" name="motivo" required><option value="">Escolha…</option>{% for m in motivos_desligamento %}<option>{{ m }}</option>{% endfor %}</select></div>
+        <div class="campo"><label for="data-desl">Data da decisão</label><input id="data-desl" name="data_decisao" type="date" value="{{ hoje.isoformat() }}" required></div>
+        <div class="campo"><label for="obs-desl">Observação (opcional)</label><input id="obs-desl" name="observacao" maxlength="300" placeholder="Ex.: decidido na reunião da diretoria"></div>
+        <button class="btn btn-perigo" type="submit">Registrar desligamento</button>
+      </form>
+    </details>
+    {% elif a.situacao == 'ativo' %}
+    <p class="nota" style="margin: 10px 0 0">Só o presidente registra desligamentos, depois da decisão da diretoria.</p>
+    {% endif %}
+  </section>
+
+  <section class="painel">
+    <h2>Últimos avisos</h2>
+    <div class="lista-linhas">
+      {% for av in a.avisos[:6] %}
+      <div><span>{{ av.enviado_em.strftime('%d/%m %H:%M') }} · {{ av.motivo|capitalize }}</span><span class="sub" style="margin:0">{{ av.enviado_por.nome if av.enviado_por else '' }}</span></div>
+      {% else %}
+      <div><span class="sub" style="margin:0">Nenhum aviso enviado.</span></div>
+      {% endfor %}
+    </div>
+  </section>
+</div>
+{% endblock %}

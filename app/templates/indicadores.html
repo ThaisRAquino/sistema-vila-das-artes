@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block titulo %}Indicadores{% endblock %}
+{% block conteudo %}
+<div class="cabecalho">
+  <div>
+    <h1>Indicadores de impacto</h1>
+    <div class="sub">O "antes" veio do diagnóstico da 1ª visita (11/10/2026). O "depois" é calculado pelo sistema com os dados de hoje, {{ gerado_em|data }}.</div>
+  </div>
+  <button class="btn nao-imprimir" type="button" onclick="window.print()">Imprimir ou salvar em PDF</button>
+</div>
+
+<div class="tabela-caixa" style="margin-bottom: 18px">
+  <table>
+    <thead><tr><th>Indicador</th><th>Antes (papel e planilhas)</th><th>Depois (com o sistema)</th></tr></thead>
+    <tbody>
+      <tr><td><b>Famílias cadastradas</b></td><td>{{ antes.familias }}</td><td><b>{{ ativos }}</b> associados ativos no sistema</td></tr>
+      <tr><td><b>Nº de sócio repetido</b></td><td>{{ antes.duplicidade }}</td><td><b>{{ numeros_repetidos }}</b> caso(s): o sistema não aceita número nem CPF repetido</td></tr>
+      <tr><td><b>Documentação completa</b></td><td>{{ antes.documentacao }}</td><td><b>{{ pct_completos }}%</b> ({{ completos }} de {{ ativos }}), contados um a um</td></tr>
+      <tr><td><b>Tempo para achar uma família</b></td><td>{{ antes.busca }}</td><td>Cronometre na 2ª visita: busca por nome, CPF ou nº de sócio</td></tr>
+      <tr><td><b>Tempo para montar a lista do CDHU / Prefeitura</b></td><td>{{ antes.lista }}</td><td>Cronometre na 2ª visita: botão <b>Exportar Excel</b> em Associados{% if exportacoes_30 %} (usado {{ exportacoes_30 }}× nos últimos 30 dias){% endif %}</td></tr>
+      <tr><td><b>Horas por semana com cadastro e conferência</b></td><td>{{ antes.horas }}</td><td>Pergunte à equipe depois de algumas semanas de uso</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="grade">
+  <section class="painel">
+    <h2>Mensalidades · {{ mes[5:] }}/{{ mes[:4] }}</h2>
+    <div style="font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; font-size: 40px">{{ pct_pagas }}%</div>
+    <div class="sub" style="margin: 0">{{ pagas }} de {{ cobradas }} pagas com comprovante validado pela equipe</div>
+    <div class="barra"><i style="width: {{ pct_pagas }}%; background: var(--azul)"></i></div>
+    <p class="nota" style="margin: 12px 0 0">Tempo médio entre o envio do comprovante e a validação (últimos 90 dias):
+      <b>{% if tempo_validacao is none %}ainda sem dados{% elif tempo_validacao < 1 %}menos de 1 hora{% elif tempo_validacao < 48 %}{{ tempo_validacao|round(0)|int }} h{% else %}{{ (tempo_validacao / 24)|round(1) }} dias{% endif %}</b></p>
+  </section>
+  <section class="painel">
+    <h2>Assembleias</h2>
+    <div style="font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; font-size: 40px">{{ presenca_media|round(0)|int if presenca_media is not none else '—' }}</div>
+    <div class="sub" style="margin: 0">presentes em média nas últimas {{ ultimas|length }} assembleias ({{ pct_presenca }}% dos ativos)</div>
+    <div class="lista-linhas" style="margin-top: 10px">
+      {% for asm, n in ultimas %}<div><span>{{ asm.data|data }}</span><b>{{ n }}</b></div>{% else %}<div><span class="sub" style="margin:0">Nenhuma assembleia encerrada ainda.</span></div>{% endfor %}
+    </div>
+  </section>
+  <section class="painel">
+    <h2>Área do associado e comunicação</h2>
+    <div style="font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; font-size: 40px">{{ pct_app }}%</div>
+    <div class="sub" style="margin: 0">{{ usando_app }} de {{ ativos }} associados usam a área do associado · {{ com_foto }} com foto</div>
+    <div class="barra"><i style="width: {{ pct_app }}%; background: var(--azul)"></i></div>
+    <p class="nota" style="margin: 12px 0 0">Avisos enviados pelo WhatsApp nos últimos 30 dias: <b>{{ avisos_30 }}</b></p>
+  </section>
+</div>
+<p class="nota">Para o relatório final: imprima esta página (ou salve em PDF) na 2ª visita e use os números na seção 7.1, junto com os tempos cronometrados.</p>
+{% endblock %}

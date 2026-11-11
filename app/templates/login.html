@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block titulo %}Entrar{% endblock %}
+{% block pagina %}
+<div class="login-pagina">
+  <div class="login-caixa">
+    <div class="login-topo">
+      <img src="{{ url_for('static', filename='img/logo.jpg') }}" alt="Logo da Associação Vila das Artes">
+      <div>
+        <div class="marca">Vila das Artes</div>
+        <div style="margin-top: 8px; opacity: .95">Gestão de associados · Embu das Artes</div>
+      </div>
+      <div class="faixa" aria-hidden="true"><i style="background:#F5B935"></i><i style="background:#D9483B"></i><i style="background:#2E7DBF"></i><i style="background:#7A4FA0"></i></div>
+    </div>
+    <form method="post">
+      <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+      {% with mensagens = get_flashed_messages(with_categories=true) %}
+        {% for categoria, texto in mensagens %}<div class="mensagem {{ categoria }}">{{ texto }}</div>{% endfor %}
+      {% endwith %}
+      <div class="campo">
+        <label for="login">Usuário</label>
+        <input id="login" name="login" autocomplete="username" required autofocus>
+      </div>
+      <div class="campo">
+        <label for="senha">Senha</label>
+        <input id="senha" name="senha" type="password" autocomplete="current-password" required>
+      </div>
+      <button class="btn btn-primario" type="submit">Entrar</button>
+      <p class="nota">Acesso da equipe da associação. Dados protegidos conforme a LGPD.</p>
+      <a href="{{ url_for('area.entrar') }}" style="text-align: center">Sou associado →</a>
+    </form>
+  </div>
+</div>
+{% endblock %}

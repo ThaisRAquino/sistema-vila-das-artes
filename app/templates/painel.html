@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% from "_macros.html" import whatsapp %}
+{% block titulo %}Painel{% endblock %}
+{% block conteudo %}
+<div class="cabecalho">
+  <div>
+    <h1>Olá, {{ current_user.nome.split()[0] }}</h1>
+    <div class="sub">Associação Vila das Artes · Embu das Artes/SP</div>
+  </div>
+  <div class="acoes">
+    <form class="busca" method="get" action="{{ url_for('associados.lista') }}" role="search">
+      <input name="q" placeholder="Nome, CPF ou nº de sócio" aria-label="Buscar associado">
+    </form>
+    {% if pode('conferencia') %}<a class="btn btn-primario" href="{{ url_for('associados.novo') }}">+ Novo associado</a>
+    {% else %}<a class="btn btn-primario" href="{{ url_for('mensalidades.receber') }}">Receber mensalidade</a>{% endif %}
+  </div>
+</div>
+
+<div class="cards">
+  <div class="card"><div class="rotulo">Associados ativos</div><div class="numero">{{ total }}</div>
+    <div class="rotulo">{{ regulares }} regular{{ 'es' if regulares != 1 }} · <span style="color: var(--info-texto); font-weight: 600">{{ mutirantes }} mutirante{{ 's' if mutirantes != 1 }}</span></div></div>
+  <a class="card" href="{{ url_for('mensalidades.mes') }}" style="text-decoration: none; color: inherit"><div class="rotulo">Mensalidades de {{ competencia[5:] }}/{{ competencia[:4] }} validadas</div>
+    <div class="numero">{{ ((100 * pagas / cobradas)|round(0)|int) if cobradas else 0 }}%</div>
+    <div class="barra"><i style="width: {{ (100 * pagas / cobradas) if cobradas else 0 }}%"></i></div>
+    {% if em_analise %}<div class="rotulo" style="margin-top: 6px; color: var(--info-texto); font-weight: 600">{{ em_analise }} comprovante(s) para validar</div>{% endif %}</a>
+  <div class="card risco"><div class="rotulo">Risco de desligamento</div><div class="numero">{{ risco|length }}</div><div class="rotulo">3 faltas ou 3 mensalidades seguidas</div></div>
+  <a class="card pendente" href="{{ url_for('associados.lista', filtro='pendentes') }}" style="text-decoration: none"><div class="rotulo">Com documento pendente</div><div class="numero">{{ docs_pendentes }}</div></a>
+</div>
+
+<div class="grade">
+  <section class="painel">
+    <h2>Avisar antes do desligamento</h2>
+    <p class="nota" style="margin: 0 0 10px">O sistema só alerta. A decisão sobre o desligamento é da diretoria.</p>
+    <div class="lista-linhas">
+      {% for a, s in risco + atencao %}
+      <div>
+        <span><a href="{{ url_for('associados.ficha', associado_id=a.id) }}" style="color: inherit; text-decoration: none"><b style="color: var(--primaria)">{{ a.numero_socio }}</b> · {{ a.nome }}</a><br>
+          <span class="sub" style="margin:0">{{ s.motivos|join(' · ') }}</span></span>
+        <span style="display: flex; gap: 8px; align-items: center">
+          {% if s.nivel == 'risco' %}<span class="etiqueta risco">▲ Risco</span>{% else %}<span class="etiqueta pendente">◐ Atenção</span>{% endif %}
+          {{ whatsapp(a, 'falta' if s.faltas >= s.atrasadas else 'mensalidade', 'Avisar') }}
+        </span>
+      </div>
+      {% else %}
+      <div><span class="sub" style="margin:0">Ninguém em risco no momento.</span></div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="painel">
+    <h2>Assembleias</h2>
+    <div style="display: flex; gap: 14px; align-items: center; margin-bottom: 14px">
+      <div class="data-chip"><b>{{ proxima.strftime('%d') }}</b><span>{{ ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'][proxima.month - 1] }}</span></div>
+      <div style="font-size: 14px; line-height: 1.5">Próxima: domingo, {{ proxima|data }}<br>
+        {% if aberta %}<a href="{{ url_for('assembleias.presenca', assembleia_id=aberta.id) }}"><b>Lista de {{ aberta.data|data }} aberta – marcar presença</b></a>
+        {% else %}<a href="{{ url_for('assembleias.lista') }}">Abrir lista de presença</a>{% endif %}</div>
+    </div>
+    {% if ultimas %}
+    <div class="sub" style="margin: 0 0 6px">Presentes nas últimas assembleias</div>
+    <div class="colunas">
+      {% for a in ultimas %}{% set n = presencas.get(a.id, 0) %}
+      <div class="col"><b>{{ n }}</b><i style="height: {{ (70 * n / maior)|round(0) + 4 }}px"></i>{{ a.data.strftime('%d/%m') }}</div>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

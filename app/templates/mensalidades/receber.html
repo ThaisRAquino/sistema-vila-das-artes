@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% from "_macros.html" import etiqueta_mensalidade %}
+{% block titulo %}Receber mensalidade{% endblock %}
+{% block conteudo %}
+{% if voltar %}<a href="{{ url_for('assembleias.presenca', assembleia_id=voltar) }}" style="font-size: 14px; text-decoration: none">← Voltar para a lista de presença</a>
+{% else %}<a href="{{ url_for('mensalidades.mes') }}" style="font-size: 14px; text-decoration: none">← Mensalidades</a>{% endif %}
+<div class="cabecalho">
+  <div>
+    <h1>Receber mensalidade</h1>
+    <div class="sub">Para a coleta na assembleia ou na sede. A administração confere depois e só então a mensalidade fica paga.</div>
+  </div>
+</div>
+
+<form method="get" class="painel" style="display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; margin-bottom: 18px; max-width: 560px">
+  {% if voltar %}<input type="hidden" name="voltar" value="{{ voltar }}">{% endif %}
+  <div class="campo" style="flex: 1 1 180px"><label for="codigo">Nº de sócio ou QR</label>
+    <input id="codigo" name="codigo" value="{{ codigo }}" inputmode="numeric" placeholder="Ex.: 0142" autofocus required></div>
+  <button class="btn btn-primario" type="submit">Buscar</button>
+</form>
+
+{% if a %}
+<section class="painel" style="max-width: 560px">
+  <div style="display: flex; gap: 12px; align-items: center; margin-bottom: 12px">
+    <div class="avatar" aria-hidden="true" style="width: 52px; height: 52px; font-size: 18px">{% if a.foto %}<img src="{{ url_for('associados.foto', associado_id=a.id) }}" alt="" style="width: 100%; height: 100%; object-fit: cover; border-radius: inherit">{% else %}{{ a.iniciais }}{% endif %}</div>
+    <div><b style="font-size: 17px">{{ a.nome }}</b><div class="sub" style="margin: 0">Nº {{ a.numero_socio }} · {{ 'Mutirante' if a.mutirante else 'Regular' }}</div></div>
+  </div>
+  <p class="nota" style="margin: 0 0 12px">Confira o nome e a foto antes de receber.</p>
+  <div class="lista-linhas">
+    {% for m in mensalidades %}
+    <div style="flex-wrap: wrap; gap: 8px">
+      <span><b>{{ m.mes_ano }}</b> · {{ m.valor|moeda }}{% if m.status == 'recusada' %}<br><span class="sub" style="margin:0; color: var(--risco-texto)">Recusada antes: {{ m.motivo_recusa }}</span>{% endif %}</span>
+      {{ etiqueta_mensalidade(m) }}
+      {% if m.status == 'em_analise' %}
+        <span class="sub" style="width: 100%; margin: 0">Já recebida{% if m.registrado_por %} por {{ m.registrado_por.nome }}{% endif %}{% if m.forma == 'dinheiro' %} em dinheiro{% endif %}. Aguardando a conferência.</span>
+      {% else %}
+      <div style="width: 100%; display: flex; gap: 8px; flex-wrap: wrap">
+        <form method="post" action="{{ url_for('mensalidades.receber_mensalidade', mensalidade_id=m.id) }}">
+          <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+          <input type="hidden" name="forma" value="dinheiro">
+          <input type="hidden" name="voltar" value="{{ voltar }}">
+          <button class="btn btn-ok" type="submit">Recebi {{ m.valor|moeda }} em dinheiro</button>
+        </form>
+        <form method="post" enctype="multipart/form-data" action="{{ url_for('mensalidades.receber_mensalidade', mensalidade_id=m.id) }}" style="display: flex; gap: 8px; flex-wrap: wrap; flex: 1 1 240px">
+          <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+          <input type="hidden" name="forma" value="pix">
+          <input type="hidden" name="voltar" value="{{ voltar }}">
+          <input type="file" name="comprovante" accept="image/*,application/pdf" capture="environment" required aria-label="Foto do comprovante de {{ m.mes_ano }}" style="flex: 1 1 160px; font-size: 13px; min-width: 0">
+          <button class="btn" type="submit">Enviar comprovante</button>
+        </form>
+      </div>
+      {% endif %}
+    </div>
+    {% else %}
+    <div><span><b style="color: var(--ok-texto)">Nenhuma mensalidade em aberto.</b> {{ 'Mutirante isento da mensalidade.' if a.mutirante else '' }}</span></div>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,18 @@
+{
+  "name": "Vila das Artes",
+  "short_name": "Vila das Artes",
+  "description": "Área do associado da Associação Vila das Artes: carteirinha, mensalidades e assembleias.",
+  "lang": "pt-BR",
+  "id": "/associado/",
+  "start_url": "/associado/",
+  "scope": "/associado/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F4F6FC",
+  "theme_color": "#2B3F8F",
+  "icons": [
+    {"src": "/static/icones/icone-192.png", "sizes": "192x192", "type": "image/png"},
+    {"src": "/static/icones/icone-512.png", "sizes": "512x512", "type": "image/png"},
+    {"src": "/static/icones/icone-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+  ]
+}

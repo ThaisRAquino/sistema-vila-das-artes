@@ -1,0 +1,26 @@
+{# Botão que registra o aviso e abre o WhatsApp com a mensagem pronta #}
+{% macro whatsapp(associado, motivo, rotulo='Avisar pelo WhatsApp', classe='btn btn-pequeno btn-whats') %}
+  {% if tem_whatsapp(associado) %}
+  <form method="post" action="{{ url_for('avisos.whatsapp', associado_id=associado.id) }}" target="_blank" style="margin: 0">
+    <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+    <input type="hidden" name="motivo" value="{{ motivo }}">
+    <button class="{{ classe }}" type="submit">{{ rotulo }}</button>
+  </form>
+  {% else %}
+  <a class="btn btn-pequeno" href="{{ url_for('associados.editar', associado_id=associado.id) }}" title="Cadastre o celular para avisar pelo WhatsApp">Sem celular</a>
+  {% endif %}
+{% endmacro %}
+
+{% macro etiqueta_situacao(s) %}
+  {% if s.nivel == 'risco' %}<span class="etiqueta risco">▲ Risco</span>
+  {% elif s.nivel == 'atencao' %}<span class="etiqueta pendente">◐ Atenção</span>
+  {% else %}<span class="etiqueta ok">● Em dia</span>{% endif %}
+{% endmacro %}
+
+{% macro etiqueta_mensalidade(m) %}
+  {% if m.status == 'paga' %}<span class="etiqueta ok">● Paga</span>
+  {% elif m.status == 'em_analise' %}<span class="etiqueta info">◔ Em análise</span>
+  {% elif m.status == 'recusada' %}<span class="etiqueta risco">✕ Recusada</span>
+  {% elif m.status == 'isenta' %}<span class="etiqueta info">◆ Isenta</span>
+  {% else %}<span class="etiqueta pendente">◐ Sem comprovante</span>{% endif %}
+{% endmacro %}

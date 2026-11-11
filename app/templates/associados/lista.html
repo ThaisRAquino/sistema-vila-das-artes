@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% from "_macros.html" import etiqueta_situacao %}
+{% block titulo %}Associados{% endblock %}
+{% block conteudo %}
+<div class="cabecalho">
+  <div>
+    <h1>Associados</h1>
+    <div class="sub">{{ (contagem.get('regular', 0) + contagem.get('mutirante', 0)) }} ativos · nº de sócio único</div>
+  </div>
+  <div class="linha-acoes">
+    {% if pode('conferencia') %}
+    <a class="btn" href="{{ url_for('associados.exportar', q=termo, filtro=filtro) }}" title="Baixa a lista que está na tela, com os mesmos filtros">Exportar Excel</a>
+    <a class="btn" href="{{ url_for('acessos.lista') }}">Acessos ao app</a>
+    <a class="btn" href="{{ url_for('importacao.inicio') }}">Importar planilha</a>
+    <a class="btn btn-primario" href="{{ url_for('associados.novo') }}">+ Novo associado</a>
+    {% endif %}
+  </div>
+</div>
+
+<div class="filtros">
+  <form class="busca" method="get" role="search">
+    <input type="hidden" name="filtro" value="{{ filtro }}">
+    <input name="q" value="{{ termo }}" placeholder="Nome, CPF ou nº de sócio" aria-label="Buscar associado">
+  </form>
+  {% set total = contagem.get('regular', 0) + contagem.get('mutirante', 0) %}
+  <a class="pilula {{ 'ativa' if filtro == 'todos' }}" href="{{ url_for('associados.lista', q=termo) }}">Todos · {{ total }}</a>
+  <a class="pilula {{ 'ativa' if filtro == 'regular' }}" href="{{ url_for('associados.lista', q=termo, filtro='regular') }}">Regulares · {{ contagem.get('regular', 0) }}</a>
+  <a class="pilula {{ 'ativa' if filtro == 'mutirante' }}" href="{{ url_for('associados.lista', q=termo, filtro='mutirante') }}">Mutirantes · {{ contagem.get('mutirante', 0) }}</a>
+  <a class="pilula {{ 'ativa' if filtro == 'pendentes' }}" href="{{ url_for('associados.lista', q=termo, filtro='pendentes') }}">Doc. pendente · {{ pendentes }}</a>
+  <a class="pilula {{ 'ativa' if filtro == 'completos' }}" href="{{ url_for('associados.lista', q=termo, filtro='completos') }}">Doc. completa · {{ completos }}</a>
+  {% if desligados %}<a class="pilula {{ 'ativa' if filtro == 'desligados' }}" href="{{ url_for('associados.lista', q=termo, filtro='desligados') }}">Desligados · {{ desligados }}</a>{% endif %}
+</div>
+
+<div class="tabela-caixa">
+  <table>
+    <thead><tr><th>Nº sócio</th><th>Associado</th><th>CPF</th><th>Categoria</th><th>Documentos</th><th>Situação</th></tr></thead>
+    <tbody>
+    {% for a in associados %}
+      <tr>
+        <td class="num">{{ a.numero_socio }}</td>
+        <td><a href="{{ url_for('associados.ficha', associado_id=a.id) }}" style="font-weight: 700; color: var(--texto); text-decoration: none">{{ a.nome }}</a>
+          <div class="sub" style="margin: 0">desde {{ a.data_inscricao|data }}</div></td>
+        <td style="white-space: nowrap">{{ a.cpf|cpf_mascarado }}</td>
+        <td>{% if a.mutirante %}<span style="color: var(--info-texto); font-weight: 600">Mutirante</span>{% else %}Regular{% endif %}</td>
+        <td>{% if a.docs_entregues < a.docs_total %}<span style="color: var(--pend-texto); font-weight: 700">{{ a.docs_entregues }}/{{ a.docs_total }}</span>{% else %}{{ a.docs_entregues }}/{{ a.docs_total }}{% endif %}</td>
+        <td>
+          {% set s = situacao(a) %}
+          {{ etiqueta_situacao(s) }}
+          {% if s.motivos %}<div class="sub" style="margin: 4px 0 0">{{ s.motivos|join(' · ') }}</div>{% endif %}
+        </td>
+      </tr>
+    {% else %}
+      <tr><td colspan="6" class="vazio">Nenhum associado encontrado.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

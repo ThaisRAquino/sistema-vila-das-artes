@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block titulo %}Minha senha{% endblock %}
+{% block conteudo %}
+<div class="cabecalho"><div><h1>Minha senha</h1>
+  <div class="sub">{% if current_user.trocar_senha %}Sua senha é provisória. Crie uma senha sua para usar o sistema.{% else %}Troque a sua senha de acesso.{% endif %}</div></div></div>
+<form method="post" class="painel" style="max-width: 440px; display: flex; flex-direction: column; gap: 14px">
+  <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+  <div class="campo"><label for="atual">Senha atual{% if current_user.trocar_senha %} (a provisória){% endif %}</label><input id="atual" name="atual" type="password" autocomplete="current-password" required></div>
+  <div class="campo"><label for="nova">Senha nova</label><input id="nova" name="nova" type="password" autocomplete="new-password" minlength="8" required><span class="ajuda">Pelo menos 8 caracteres. Não use datas de nascimento nem o nome da associação.</span></div>
+  <div class="campo"><label for="confirmar">Repita a senha nova</label><input id="confirmar" name="confirmar" type="password" autocomplete="new-password" minlength="8" required></div>
+  <button class="btn btn-primario" type="submit">Salvar senha</button>
+</form>
+{% endblock %}

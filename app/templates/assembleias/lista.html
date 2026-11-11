@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block titulo %}Assembleias{% endblock %}
+{% block conteudo %}
+<div class="cabecalho">
+  <div>
+    <h1>Assembleias</h1>
+    <div class="sub">Todo 2º domingo do mês · presença pelo nº de sócio ou pelo QR da carteirinha</div>
+  </div>
+  <form method="post" action="{{ url_for('assembleias.nova') }}" class="linha-acoes">
+    <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+    <label for="data" style="font-size: 14px; font-weight: 700">Data</label>
+    <input id="data" type="date" name="data" value="{{ sugestao.isoformat() }}" style="height: 44px; border: 1px solid #BAC6E4; border-radius: 10px; padding: 0 10px; font: inherit">
+    <button class="btn btn-primario" type="submit">Abrir lista de presença</button>
+  </form>
+</div>
+
+<div class="tabela-caixa">
+  <table>
+    <thead><tr><th>Data</th><th>Situação</th><th>Presentes</th><th>Participação</th><th></th></tr></thead>
+    <tbody>
+    {% for a in assembleias %}
+      {% set n = totais.get(a.id, 0) %}
+      <tr>
+        <td><b>{{ a.data|data }}</b></td>
+        <td>{% if a.encerrada %}<span class="etiqueta ok">● Encerrada</span>{% else %}<span class="etiqueta info">◔ Lista aberta</span>{% endif %}</td>
+        <td>{{ n }}</td>
+        <td style="min-width: 160px"><div class="barra"><i style="width: {{ (100 * n / ativos)|round(0) if ativos else 0 }}%"></i></div></td>
+        <td><a class="btn btn-pequeno" href="{{ url_for('assembleias.presenca', assembleia_id=a.id) }}">{{ 'Ver lista' if a.encerrada else 'Marcar presença' }}</a></td>
+      </tr>
+    {% else %}
+      <tr><td colspan="5" class="vazio">Nenhuma assembleia ainda. Abra a lista de presença da próxima.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

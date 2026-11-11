@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block titulo %}Sistema{% endblock %} – Vila das Artes</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Public+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  {% set manifesto, titulo_app = 'manifest-equipe.webmanifest', 'VDA Equipe' %}
+  {% include "_pwa_head.html" %}
+</head>
+<body>
+{% block pagina %}
+<div class="app">
+  <aside class="menu">
+    <div class="topo">
+      <img src="{{ url_for('static', filename='img/logo.jpg') }}" alt="Logo da Associação Vila das Artes">
+      <div class="marca">Vila das Artes</div>
+      <button class="abrir-menu" type="button" aria-expanded="false" aria-controls="menu-principal"
+              onclick="var m=this.closest('.menu');m.classList.toggle('aberto');this.setAttribute('aria-expanded',m.classList.contains('aberto'))">Menu</button>
+    </div>
+    <nav aria-label="Menu principal" id="menu-principal">
+      {% set pagina = request.endpoint or '' %}
+      <a href="{{ url_for('painel.inicio') }}" class="{{ 'ativo' if pagina.startswith('painel') }}">Painel</a>
+      <a href="{{ url_for('associados.lista') }}" class="{{ 'ativo' if pagina.startswith(('associados', 'importacao', 'acessos')) }}">Associados</a>
+      <a href="{{ url_for('mensalidades.mes') }}" class="{{ 'ativo' if pagina.startswith('mensalidades') }}">Mensalidades</a>
+      <a href="{{ url_for('assembleias.lista') }}" class="{{ 'ativo' if pagina.startswith('assembleias') }}">Assembleias</a>
+      <a href="{{ url_for('avisos.lista') }}" class="{{ 'ativo' if pagina.startswith('avisos') }}">Avisos (WhatsApp)</a>
+      <a href="{{ url_for('indicadores.inicio') }}" class="{{ 'ativo' if pagina.startswith('indicadores') }}">Indicadores</a>
+      {% if current_user.presidente %}<a href="{{ url_for('equipe.lista') }}" class="{{ 'ativo' if pagina.startswith('equipe.lista') }}">Equipe</a>{% endif %}
+      <a href="{{ url_for('area.entrar') }}" target="_blank" rel="noopener">Área do associado ↗</a>
+    </nav>
+    <div class="rodape">
+      <button class="btn btn-pequeno" type="button" data-instalar hidden style="margin-bottom: 10px; width: 100%">Instalar app</button>
+      {{ current_user.nome }} · {{ current_user.nome_perfil }} · <a href="{{ url_for('equipe.minha_senha') }}" style="color: inherit">Minha senha</a>
+      <form method="post" action="{{ url_for('auth.sair') }}">
+        <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+        <button type="submit">Sair</button>
+      </form>
+    </div>
+  </aside>
+  <main class="conteudo">
+    {% with mensagens = get_flashed_messages(with_categories=true) %}
+      {% if mensagens %}
+      <div class="mensagens" role="status">
+        {% for categoria, texto in mensagens %}<div class="mensagem {{ categoria }}">{{ texto }}</div>{% endfor %}
+      </div>
+      {% endif %}
+    {% endwith %}
+    {% block conteudo %}{% endblock %}
+  </main>
+</div>
+{% endblock %}
+</body>
+</html>

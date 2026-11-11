@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+{% block titulo %}Assembleia {{ assembleia.data|data }}{% endblock %}
+{% block conteudo %}
+<a href="{{ url_for('assembleias.lista') }}" style="font-size: 14px; text-decoration: none">← Assembleias</a>
+<div class="cabecalho">
+  <div>
+    <h1>Assembleia de {{ assembleia.data|data }}</h1>
+    <div class="sub">{{ 'Lista encerrada' if assembleia.encerrada else 'Lista de presença aberta' }} · {{ assembleia.local }}</div>
+  </div>
+  {% if pode('conferencia') %}
+  <form method="post" action="{{ url_for('assembleias.reabrir' if assembleia.encerrada else 'assembleias.encerrar', assembleia_id=assembleia.id) }}">
+    <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+    {% if assembleia.encerrada %}<button class="btn" type="submit">Reabrir lista</button>
+    {% else %}<button class="btn" style="background: var(--vermelho); border-color: var(--vermelho); color: #fff; font-weight: 700" type="submit">Encerrar lista</button>{% endif %}
+  </form>
+  {% endif %}
+</div>
+
+<div class="grade">
+  <div style="display: flex; flex-direction: column; gap: 14px">
+    {% if not assembleia.encerrada %}
+    <form class="marcar" method="post" id="form-presenca">
+      <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+      <label for="codigo">Digite o nº do sócio ou leia o QR da carteirinha</label>
+      <div class="entrada">
+        <input id="codigo" name="codigo" inputmode="numeric" autocomplete="off" placeholder="Ex.: 0142" autofocus required>
+        <button type="submit">Marcar presença</button>
+      </div>
+      <div class="entrada">
+        <button type="button" class="camera" id="abrir-camera">Ler QR com a câmera</button>
+      </div>
+      <div id="leitor" hidden></div>
+      <div id="retorno" class="retorno" role="status" hidden></div>
+      <a id="receber-link" class="btn" hidden style="margin-top: 10px; width: 100%; justify-content: center; background: #fff; color: var(--primaria-escura); font-weight: 700">Receber mensalidade desta pessoa</a>
+    </form>
+    <form method="get" action="{{ url_for('mensalidades.receber') }}" class="painel" style="display: flex; gap: 8px; flex-wrap: wrap; align-items: flex-end; margin-top: 12px">
+      <input type="hidden" name="voltar" value="{{ assembleia.id }}">
+      <div class="campo" style="flex: 1 1 160px"><label for="codigo-receber">Receber mensalidade (nº de sócio)</label>
+        <input id="codigo-receber" name="codigo" inputmode="numeric" placeholder="Ex.: 0142" required></div>
+      <button class="btn" type="submit">Abrir</button>
+    </form>
+    {% endif %}
+    <section class="painel" id="bloco-recentes">
+      <h2>Registros recentes</h2>
+      <div class="lista-linhas">
+        {% for p in recentes %}
+        <div>
+          <span><b style="color: var(--primaria)">{{ p.associado.numero_socio }}</b> {{ p.associado.nome }} <span class="sub" style="margin:0">· {{ 'QR' if p.forma == 'qr' else 'nº' }}</span></span>
+          <span style="display: flex; gap: 8px; align-items: center"><span class="sub" style="margin:0">{{ p.registrada_em.strftime('%H:%M') }}</span>
+          {% if not assembleia.encerrada %}
+          <form method="post" action="{{ url_for('assembleias.remover_presenca', assembleia_id=assembleia.id, presenca_id=p.id) }}">
+            <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+            <button class="btn btn-pequeno btn-perigo" type="submit" title="Remover presença marcada por engano">Remover</button>
+          </form>
+          {% endif %}</span>
+        </div>
+        {% else %}
+        <div><span class="sub" style="margin:0">Nenhuma presença marcada ainda.</span></div>
+        {% endfor %}
+      </div>
+    </section>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 14px">
+    <section class="painel" id="bloco-total">
+      <div class="rotulo sub" style="margin:0">Presentes</div>
+      <div style="font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; font-size: 44px">{{ total }} <span style="font-size: 18px; color: var(--texto-suave); font-weight: 500">de {{ ativos }}</span></div>
+      <div class="barra"><i style="width: {{ (100 * total / ativos)|round(0) if ativos else 0 }}%; background: var(--azul)"></i></div>
+    </section>
+    {% if previa is not none %}
+    <section class="painel" id="bloco-previa" style="background: var(--risco-fundo)">
+      <h2 style="color: #7E1F17">Ao encerrar a lista</h2>
+      <p style="color: #7E1F17; margin: 0; font-size: 14px; line-height: 1.5">Se a lista fechar agora, <b>{{ previa }}</b> associado(s) chegam a 3 faltas seguidas. Eles aparecem no painel com o botão de aviso pelo WhatsApp. A decisão sobre o desligamento é da diretoria.</p>
+    </section>
+    {% endif %}
+  </div>
+</div>
+
+{% if not assembleia.encerrada %}
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script>
+(function () {
+  const form = document.getElementById('form-presenca');
+  const campo = document.getElementById('codigo');
+  const retorno = document.getElementById('retorno');
+  let ultimo = '', leitor = null;
+
+  async function enviar(codigo) {
+    const dados = new FormData(form);
+    dados.set('codigo', codigo);
+    const r = await fetch(form.action || location.href, { method: 'POST', body: dados, headers: { 'X-Requested-With': 'fetch' } });
+    const j = await r.json();
+    retorno.hidden = false;
+    retorno.textContent = j.mensagem;
+    retorno.style.background = j.ok ? '#DDF2E8' : '#FADBD7';
+    retorno.style.color = j.ok ? '#17614E' : '#A3271D';
+    const link = document.getElementById('receber-link');
+    if (j.receber_url) { link.href = j.receber_url; link.hidden = false; } else { link.hidden = true; }
+    campo.value = '';
+    campo.focus();
+    if (j.ok) atualizarTela();
+  }
+
+  // Atualiza "Registros recentes", o total de presentes e o aviso de faltas sem recarregar a página
+  async function atualizarTela() {
+    try {
+      const html = await (await fetch(location.href, { cache: 'no-store' })).text();
+      const nova = new DOMParser().parseFromString(html, 'text/html');
+      ['bloco-recentes', 'bloco-total', 'bloco-previa'].forEach(function (id) {
+        const atual = document.getElementById(id), novo = nova.getElementById(id);
+        if (atual && novo) atual.replaceWith(novo);
+        else if (atual && !novo) atual.remove();
+      });
+    } catch (erro) { /* se falhar, os números aparecem ao recarregar a página */ }
+  }
+
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    if (campo.value.trim()) enviar(campo.value.trim());
+  });
+
+  document.getElementById('abrir-camera').addEventListener('click', function () {
+    if (!window.Html5Qrcode) { alert('Leitor de QR indisponível sem internet. Digite o nº do sócio.'); return; }
+    const area = document.getElementById('leitor');
+    area.hidden = false;
+    if (leitor) return;
+    leitor = new Html5Qrcode('leitor');
+    leitor.start({ facingMode: 'environment' }, { fps: 10, qrbox: 220 }, function (texto) {
+      if (texto === ultimo) return;          // evita marcar duas vezes o mesmo QR seguido
+      ultimo = texto;
+      setTimeout(function () { ultimo = ''; }, 3000);
+      enviar(texto);
+    });
+  });
+})();
+</script>
+{% endif %}
+{% endblock %}

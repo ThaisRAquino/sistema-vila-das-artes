@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block titulo %}Área do associado{% endblock %} – Vila das Artes</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Public+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  {% set manifesto, titulo_app = 'manifest-associado.webmanifest', 'Vila das Artes' %}
+  {% include "_pwa_head.html" %}
+  <style>
+    .area { max-width: 480px; margin: 0 auto; padding: 18px 16px 32px; display: flex; flex-direction: column; gap: 14px; }
+    .area-topo { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .area-topo .marca-area { display: flex; align-items: center; gap: 10px; font-family: "Bricolage Grotesque", sans-serif; font-weight: 800; font-size: 19px; color: var(--primaria-escura); }
+    .area-topo img { width: 40px; height: 40px; border-radius: 50%; background: #fff; }
+    .area .painel { padding: 16px; }
+    .area .btn { height: 50px; font-size: 15px; }
+    .carteirinha { background: var(--primaria); color: #fff; border-radius: 18px; padding: 16px; display: flex; gap: 14px; align-items: center; }
+    .carteirinha .foto { width: 84px; height: 84px; border-radius: 14px; background: var(--primaria-clara); color: var(--primaria-escura); display: flex; align-items: center; justify-content: center; font-family: "Bricolage Grotesque", sans-serif; font-weight: 800; font-size: 26px; flex: none; overflow: hidden; }
+    .carteirinha .foto img { width: 100%; height: 100%; object-fit: cover; }
+    .carteirinha .qr { width: 92px; height: 92px; background: #fff; border-radius: 10px; padding: 4px; flex: none; }
+    .carteirinha .num { font-family: "Bricolage Grotesque", sans-serif; font-size: 26px; font-weight: 800; line-height: 1; }
+    .tres { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+    .tres > div { border-radius: 14px; padding: 12px 10px; font-size: 12px; }
+    .tres b { display: block; font-size: 15px; margin-top: 2px; }
+    .termo-texto h2 { font-size: 15px; margin: 14px 0 4px; }
+    .termo-texto p { margin: 0; font-size: 14px; line-height: 1.55; color: var(--texto); }
+    .campo input[type=file] { height: auto; padding: 10px; }
+  </style>
+</head>
+<body{% block body_attrs %}{% endblock %}>
+<div class="area">
+  <div class="area-topo">
+    <div class="marca-area"><img src="{{ url_for('static', filename='img/logo.jpg') }}" alt="Logo da Associação Vila das Artes">Vila das Artes</div>
+    <div style="display: flex; gap: 8px">
+    <button class="btn btn-pequeno btn-primario" type="button" data-instalar hidden style="height: 40px">Instalar app</button>
+    {% if session.get('associado_id') %}
+    <form method="post" action="{{ url_for('area.sair') }}">
+      <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+      <button class="btn btn-pequeno" type="submit" style="height: 40px">Sair</button>
+    </form>
+    {% endif %}
+    </div>
+  </div>
+  {% with mensagens = get_flashed_messages(with_categories=true) %}
+    {% for categoria, texto in mensagens %}<div class="mensagem {{ categoria }}" role="status">{{ texto }}</div>{% endfor %}
+  {% endwith %}
+  {% block conteudo %}{% endblock %}
+</div>
+</body>
+</html>

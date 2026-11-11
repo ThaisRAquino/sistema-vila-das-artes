@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block titulo %}Equipe{% endblock %}
+{% block conteudo %}
+<div class="cabecalho">
+  <div>
+    <h1>Equipe</h1>
+    <div class="sub">Cada pessoa da equipe tem o seu usuário. Assim o sistema registra quem validou cada comprovante e quem marcou cada presença.</div>
+  </div>
+</div>
+
+<section class="painel" style="margin-bottom: 18px">
+  <h2>Cadastrar pessoa da equipe</h2>
+  <form method="post" action="{{ url_for('equipe.novo') }}" style="display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap">
+    <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+    <div class="campo" style="flex: 2 1 220px"><label for="nome">Nome</label><input id="nome" name="nome" required></div>
+    <div class="campo" style="flex: 1 1 160px"><label for="login">Usuário</label><input id="login" name="login" placeholder="ex.: maria.silva" autocomplete="off" required></div>
+    <div class="campo" style="flex: 1 1 180px"><label for="perfil">Perfil</label>
+      <select id="perfil" name="perfil">{% for valor, rotulo in perfis.items() %}<option value="{{ valor }}" {{ 'selected' if valor == 'voluntario' }}>{{ rotulo }}</option>{% endfor %}</select></div>
+    <button class="btn btn-primario" type="submit">Cadastrar</button>
+  </form>
+  <p class="nota" style="margin: 12px 0 0">O sistema cria uma senha provisória. No primeiro acesso, a pessoa troca por uma senha dela.</p>
+  <div class="lista-linhas" style="margin-top: 12px">
+    <div><span><b>Presidente / Diretoria</b></span><span class="sub" style="margin:0; text-align: right">Tudo, inclusive cadastrar a equipe e registrar desligamentos decididos pela diretoria</span></div>
+    <div><span><b>Administração</b></span><span class="sub" style="margin:0; text-align: right">Conferência: valida comprovantes, mantém o cadastro, importa e exporta listas, gera códigos de acesso</span></div>
+    <div><span><b>Voluntário</b></span><span class="sub" style="margin:0; text-align: right">Nas assembleias: marca presença e recebe pagamentos e comprovantes (a administração confere)</span></div>
+  </div>
+</section>
+
+<div class="tabela-caixa">
+  <table>
+    <thead><tr><th>Nome</th><th>Usuário</th><th>Perfil</th><th>Último acesso</th><th>Situação</th><th>Ações</th></tr></thead>
+    <tbody>
+    {% for u in usuarios %}
+      <tr {{ 'style="opacity:.6"'|safe if not u.ativo }}>
+        <td><b>{{ u.nome }}</b>{% if u.id == current_user.id %} <span class="sub" style="margin:0">(você)</span>{% endif %}</td>
+        <td>{{ u.login }}</td>
+        <td>
+          <form method="post" action="{{ url_for('equipe.alterar_perfil', usuario_id=u.id) }}">
+            <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+            <select name="perfil" aria-label="Perfil de {{ u.nome }}" onchange="this.form.submit()" style="height: 34px; border: 1px solid #BAC6E4; border-radius: 8px; padding: 0 8px; font: inherit; font-size: 14px; background: #fff">
+              {% for valor, rotulo in perfis.items() %}<option value="{{ valor }}" {{ 'selected' if (u.perfil == valor or (u.perfil == 'equipe' and valor == 'administracao')) }}>{{ rotulo.split(' (')[0] }}</option>{% endfor %}
+            </select>
+          </form>
+        </td>
+        <td>{{ u.ultimo_acesso_em|data if u.ultimo_acesso_em else '—' }}{% if u.trocar_senha %}<br><span class="sub" style="margin:0">senha provisória</span>{% endif %}</td>
+        <td>{% if u.ativo %}<span class="etiqueta ok">● Ativo</span>{% else %}<span class="etiqueta pendente">Desativado</span>{% endif %}</td>
+        <td><div class="linha-acoes">
+          <form method="post" action="{{ url_for('equipe.redefinir_senha', usuario_id=u.id) }}">
+            <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+            <button class="btn btn-pequeno" type="submit">Nova senha provisória</button>
+          </form>
+          {% if u.id != current_user.id %}
+          <form method="post" action="{{ url_for('equipe.alternar_ativo', usuario_id=u.id) }}">
+            <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+            <button class="btn btn-pequeno {{ 'btn-perigo' if u.ativo }}" type="submit">{{ 'Desativar' if u.ativo else 'Reativar' }}</button>
+          </form>
+          {% endif %}
+        </div></td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+<section class="painel" style="margin-top: 18px; display: flex; gap: 14px; flex-wrap: wrap; align-items: center; justify-content: space-between">
+  <div><h2 style="margin: 0 0 4px">Cópia de segurança</h2>
+    <div class="sub" style="margin: 0">Baixe toda semana e guarde no Google Drive da associação: banco de dados, fotos e comprovantes num só arquivo.</div></div>
+  <a class="btn btn-primario" href="{{ url_for('equipe.baixar_backup') }}">Baixar backup agora</a>
+</section>
+<p class="nota">Quando alguém sair da equipe, desative o acesso (o histórico de quem validou e marcou presença continua guardado).</p>
+{% endblock %}

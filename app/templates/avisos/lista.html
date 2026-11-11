@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block titulo %}Avisos{% endblock %}
+{% block conteudo %}
+<div class="cabecalho">
+  <div>
+    <h1>Avisos enviados</h1>
+    <div class="sub">Histórico das mensagens abertas no WhatsApp pela equipe (últimas 100)</div>
+  </div>
+</div>
+<div class="tabela-caixa">
+  <table>
+    <thead><tr><th>Quando</th><th>Associado</th><th>Motivo</th><th>Mensagem</th><th>Por</th></tr></thead>
+    <tbody>
+    {% for a in avisos %}
+      <tr>
+        <td>{{ a.enviado_em.strftime('%d/%m/%Y %H:%M') }}</td>
+        <td><a href="{{ url_for('associados.ficha', associado_id=a.associado.id) }}" style="color: var(--texto); text-decoration: none"><b style="color: var(--primaria)">{{ a.associado.numero_socio }}</b> {{ a.associado.nome }}</a></td>
+        <td>{{ a.motivo|capitalize }}</td>
+        <td style="max-width: 420px; font-size: 13px; color: var(--texto-suave)">{{ a.mensagem }}</td>
+        <td>{{ a.enviado_por.nome if a.enviado_por else '' }}</td>
+      </tr>
+    {% else %}
+      <tr><td colspan="5" class="vazio">Nenhum aviso enviado ainda. Use os botões “Avisar pelo WhatsApp” no painel ou na ficha.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

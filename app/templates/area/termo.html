@@ -1,0 +1,19 @@
+{% extends "area/base.html" %}
+{% block titulo %}Termo de uso dos dados{% endblock %}
+{% block conteudo %}
+<div class="painel termo-texto">
+  <h1 style="margin: 0; font-size: 22px">{{ termo.TITULO }}</h1>
+  <p class="sub" style="margin: 4px 0 0">Versão {{ termo.VERSAO }} · Lei Geral de Proteção de Dados (Lei nº 13.709/2018)</p>
+  {% for titulo, texto in termo.SECOES %}
+    <h2>{{ loop.index }}. {{ titulo }}</h2>
+    <p>{{ texto }}</p>
+  {% endfor %}
+</div>
+<form method="post" class="painel" style="display: flex; flex-direction: column; gap: 12px">
+  <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+  <label class="consentimento"><input type="checkbox" name="aceite_dados" value="1" required {{ 'checked' if a.termo_aceito_em and a.termo_versao == termo.VERSAO }}> <span><b>Obrigatório.</b> {{ termo.ACEITE_DADOS }}</span></label>
+  <label class="consentimento"><input type="checkbox" name="aceite_imagem" value="1" {{ 'checked' if a.imagem_autorizada_em }}> <span><b>Para enviar foto.</b> {{ termo.ACEITE_IMAGEM }}</span></label>
+  <p class="nota" style="margin: 0">Se você não autorizar a foto, pode usar a área do associado normalmente, só não terá foto na carteirinha. Você pode mudar isso depois.</p>
+  <button class="btn btn-primario" type="submit">Confirmar</button>
+</form>
+{% endblock %}

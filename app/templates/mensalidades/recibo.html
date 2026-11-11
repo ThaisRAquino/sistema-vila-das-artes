@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Recibo {{ m.numero_recibo }} – Vila das Artes</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <style>
+    body { background: #fff; }
+    .recibo { max-width: 720px; margin: 32px auto; padding: 36px 40px; border: 2px solid var(--primaria); border-radius: 16px; }
+    .recibo header { display: flex; align-items: center; gap: 16px; border-bottom: 1px solid var(--borda); padding-bottom: 18px; margin-bottom: 22px; }
+    .recibo header img { width: 72px; height: 72px; border-radius: 50%; }
+    .recibo h1 { margin: 0; font-size: 26px; }
+    .recibo .valor { font-size: 34px; font-weight: 800; color: var(--primaria); }
+    .recibo p { line-height: 1.6; font-size: 16px; }
+    .assinatura { margin-top: 48px; display: flex; justify-content: space-between; gap: 20px; font-size: 13px; color: var(--texto-suave); }
+  </style>
+</head>
+<body>
+  <div class="recibo">
+    <header>
+      <img src="{{ url_for('static', filename='img/logo.jpg') }}" alt="Logo da Associação Vila das Artes">
+      <div>
+        <h1>Recibo nº {{ m.numero_recibo }}</h1>
+        <div class="sub">Associação Vila das Artes · CNPJ 03.094.171/0001-15 · Rua Juquitiba, 92 – Jardim Nayara, Embu das Artes/SP</div>
+      </div>
+    </header>
+    <div class="valor">{{ m.valor|moeda }}</div>
+    <p>Recebemos de <b>{{ m.associado.nome }}</b>, sócio nº <b>{{ m.associado.numero_socio }}</b>, CPF {{ m.associado.cpf|cpf_mascarado }},
+      o valor de <b>{{ m.valor|moeda }}</b> referente à contribuição mensal de <b>{{ m.mes_ano }}</b>{% if m.forma %}, pago via {{ m.forma }}{% endif %}.</p>
+    <p>Comprovante conferido e validado por <b>{{ m.validado_por.nome if m.validado_por else 'equipe' }}</b> em {{ m.validado_em|data }}.</p>
+    <div class="assinatura">
+      <span>Embu das Artes, {{ m.validado_em|data }}</span>
+      <span>Recibo emitido pelo Sistema Vila das Artes</span>
+    </div>
+  </div>
+  <p class="nao-imprimir" style="text-align: center"><button class="btn btn-primario" onclick="window.print()">Imprimir ou salvar em PDF</button></p>
+</body>
+</html>

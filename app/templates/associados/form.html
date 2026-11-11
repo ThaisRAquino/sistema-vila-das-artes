@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+{% block titulo %}{{ 'Novo associado' if novo else 'Editar ficha' }}{% endblock %}
+{% macro campo(nome, rotulo, valor='', tipo='text', ajuda='', classe='', extra='') %}
+  <div class="campo {{ classe }}">
+    <label for="{{ nome }}">{{ rotulo }}</label>
+    <input id="{{ nome }}" name="{{ nome }}" type="{{ tipo }}" value="{{ valor if valor is not none else '' }}" {{ extra|safe }}>
+    {% if ajuda %}<span class="ajuda">{{ ajuda }}</span>{% endif %}
+  </div>
+{% endmacro %}
+{% macro data(v) %}{{ v.isoformat() if v else '' }}{% endmacro %}
+{% macro valor(v) %}{{ ('%.2f'|format(v)).replace('.', ',') if v is not none else '' }}{% endmacro %}
+{% block conteudo %}
+{% set a = associado %}
+<div class="cabecalho">
+  <div>
+    <a href="{{ url_for('associados.ficha', associado_id=a.id) if not novo else url_for('associados.lista') }}" style="text-decoration: none; font-size: 14px">← Voltar</a>
+    <h1>{{ 'Novo associado' if novo else 'Editar ficha · nº ' ~ a.numero_socio }}</h1>
+    <div class="sub">Campos da ficha de inscrição da associação</div>
+  </div>
+</div>
+
+<form method="post" class="painel ficha-form" style="display: flex; flex-direction: column; gap: 22px">
+  <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+
+  <fieldset>
+    <legend>Controle interno</legend>
+    <div class="campos">
+      {% if novo %}
+        {{ campo('numero_socio', 'Nº de sócio', numero, ajuda='Sugerido pelo sistema. Pode alterar; não aceita número repetido.', extra='inputmode="numeric" required') }}
+      {% endif %}
+      <div class="campo">
+        <label for="categoria">Grupo (categoria)</label>
+        <select id="categoria" name="categoria">
+          <option value="regular" {{ 'selected' if a.categoria == 'regular' }}>Regular (paga mensalidade)</option>
+          <option value="mutirante" {{ 'selected' if a.categoria == 'mutirante' }}>Mutirante (isento)</option>
+        </select>
+      </div>
+      {{ campo('data_inscricao', 'Data da inscrição', data(a.data_inscricao), 'date') }}
+    </div>
+  </fieldset>
+
+  <fieldset>
+    <legend>Titular</legend>
+    <div class="campos">
+      {{ campo('nome', 'Nome completo', a.nome, classe='largo', extra='required') }}
+      {{ campo('cpf', 'CPF', a.cpf|cpf, extra='inputmode="numeric" required placeholder="000.000.000-00"') }}
+      {{ campo('data_nascimento', 'Data de nascimento', data(a.data_nascimento), 'date') }}
+      {{ campo('rg', 'RG', a.rg) }}
+      {{ campo('orgao_emissor', 'Órgão emissor', a.orgao_emissor) }}
+      {{ campo('uf_rg', 'UF do RG', a.uf_rg, extra='maxlength="2"') }}
+      {{ campo('data_emissao_rg', 'Data de emissão do RG', data(a.data_emissao_rg), 'date') }}
+      {{ campo('nacionalidade', 'Nacionalidade', a.nacionalidade) }}
+      {{ campo('naturalidade', 'Naturalidade', a.naturalidade) }}
+      {{ campo('nome_pai', 'Nome do pai', a.nome_pai) }}
+      {{ campo('nome_mae', 'Nome da mãe', a.nome_mae) }}
+      <div class="campo">
+        <label for="estado_civil">Estado civil</label>
+        <select id="estado_civil" name="estado_civil">
+          <option value="">–</option>
+          {% for e in estados_civis %}<option value="{{ e }}" {{ 'selected' if a.estado_civil == e }}>{{ e|capitalize }}</option>{% endfor %}
+        </select>
+      </div>
+      {{ campo('grau_instrucao', 'Grau de instrução', a.grau_instrucao) }}
+    </div>
+  </fieldset>
+
+  <fieldset>
+    <legend>Trabalho e renda</legend>
+    <div class="campos">
+      {{ campo('profissao', 'Profissão', a.profissao) }}
+      {{ campo('renda', 'Renda (R$)', valor(a.renda), extra='inputmode="decimal"') }}
+      {{ campo('empresa', 'Empresa', a.empresa) }}
+      {{ campo('cnpj', 'CNPJ', a.cnpj, extra='inputmode="numeric"') }}
+      {{ campo('data_admissao', 'Data de admissão', data(a.data_admissao), 'date') }}
+      {{ campo('ctps', 'CTPS nº', a.ctps) }}
+      {{ campo('serie_ctps', 'Série', a.serie_ctps) }}
+      {{ campo('titulo_eleitor', 'Título de eleitor', a.titulo_eleitor) }}
+      {{ campo('renda_familiar_total', 'Renda familiar total (R$)', valor(a.renda_familiar_total), extra='inputmode="decimal"') }}
+    </div>
+  </fieldset>
+
+  <fieldset>
+    <legend>Contato</legend>
+    <div class="campos">
+      {{ campo('celular', 'Celular (WhatsApp)', a.celular, 'tel') }}
+      {{ campo('tel_residencial', 'Telefone residencial', a.tel_residencial, 'tel') }}
+      {{ campo('recado', 'Recado (falar com)', a.recado) }}
+      {{ campo('email', 'E-mail', a.email, 'email') }}
+    </div>
+  </fieldset>
+
+  <fieldset>
+    <legend>Endereço e moradia</legend>
+    <div class="campos">
+      {{ campo('rua', 'Rua / Av.', a.rua, classe='largo') }}
+      {{ campo('numero', 'Nº', a.numero) }}
+      {{ campo('bairro', 'Bairro', a.bairro) }}
+      {{ campo('cidade', 'Cidade', a.cidade) }}
+      {{ campo('uf', 'Estado', a.uf, extra='maxlength="2"') }}
+      {{ campo('cep', 'CEP', a.cep, extra='inputmode="numeric"') }}
+      <div class="campo">
+        <label for="tipo_residencia">Tipo de residência</label>
+        <select id="tipo_residencia" name="tipo_residencia">
+          <option value="">–</option>
+          {% for t in tipos_residencia %}<option value="{{ t }}" {{ 'selected' if a.tipo_residencia == t }}>{{ t|capitalize }}</option>{% endfor %}
+        </select>
+      </div>
+      {{ campo('valor_aluguel', 'Valor do aluguel (R$)', valor(a.valor_aluguel), extra='inputmode="decimal"') }}
+    </div>
+  </fieldset>
+
+  {% if novo %}
+  <label class="consentimento">
+    <input type="checkbox" name="consentimento" value="1" required>
+    O(a) associado(a) autoriza a Associação Vila das Artes a guardar e usar estes dados somente para os processos de moradia e a gestão da associação (LGPD).
+  </label>
+  {% endif %}
+
+  <div class="acoes">
+    <button class="btn btn-primario" type="submit">{{ 'Cadastrar associado' if novo else 'Salvar alterações' }}</button>
+    <a class="btn" href="{{ url_for('associados.ficha', associado_id=a.id) if not novo else url_for('associados.lista') }}">Cancelar</a>
+  </div>
+</form>
+{% endblock %}

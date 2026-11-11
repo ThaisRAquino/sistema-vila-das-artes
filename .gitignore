@@ -1,0 +1,14 @@
+# Ambiente virtual e cache do Python
+.venv/
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Banco de dados e chave secreta (NUNCA enviar para o GitHub: têm dados pessoais)
+instance/
+*.db
+.env
+
+# Backups (têm dados pessoais)
+backups/

@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+{% from "_macros.html" import etiqueta_mensalidade, whatsapp %}
+{% block titulo %}Mensalidades{% endblock %}
+{% block conteudo %}
+{% set ano, mes_num = competencia.split('-') %}
+<div class="cabecalho">
+  <div>
+    <h1>Mensalidades · {{ mes_num }}/{{ ano }}</h1>
+    <div class="sub">R$ 50 por mês · só conta como paga depois que a equipe valida o comprovante</div>
+  </div>
+</div>
+
+<nav class="meses" aria-label="Escolher mês">
+  {% for m in meses_menu %}<a href="{{ url_for('mensalidades.mes', mes=m) }}" class="{{ 'ativo' if m == competencia }}">{{ m[5:] }}/{{ m[2:4] }}</a>{% endfor %}
+</nav>
+
+<div class="cards">
+  <div class="card"><div class="rotulo">Esperado ({{ cobrados }} cobrados)</div><div class="numero">{{ (cobrados * 50)|moeda }}</div></div>
+  <div class="card ok"><div class="rotulo">Pagas e validadas · {{ contagem.get('paga', 0) }}</div><div class="numero">{{ (contagem.get('paga', 0) * 50)|moeda }}</div></div>
+  <div class="card info"><div class="rotulo">Aguardando conferência (todos os meses)</div><div class="numero">{{ fila|length }}</div></div>
+  <div class="card pendente"><div class="rotulo">Sem comprovante ou recusadas</div><div class="numero">{{ contagem.get('aberta', 0) + contagem.get('recusada', 0) }}</div></div>
+</div>
+
+<section class="painel" id="fila">
+  <div style="display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; align-items: center">
+    <h2 style="margin: 0">Pagamentos para conferir ({{ fila|length }})</h2>
+    <a class="btn btn-primario" href="{{ url_for('mensalidades.receber') }}">Receber mensalidade</a>
+  </div>
+  {% for m in fila %}
+  <div class="fila-item">
+    {% if m.comprovante %}
+    <a class="miniatura" href="{{ url_for('mensalidades.arquivo', mensalidade_id=m.id) }}" target="_blank" title="Abrir comprovante">
+      {% if m.comprovante.rsplit('.', 1)[-1] in ('jpg', 'jpeg', 'png', 'webp') %}
+        <img src="{{ url_for('mensalidades.arquivo', mensalidade_id=m.id) }}" alt="Comprovante de {{ m.associado.nome }}">
+      {% else %}PDF<br>abrir comprovante{% endif %}
+    </a>
+    {% else %}
+    <div class="miniatura" style="font-weight: 700">Dinheiro<br><span style="font-weight: 400">confira no caixa</span></div>
+    {% endif %}
+    <div class="info">
+      <div><b style="color: var(--primaria)">Nº {{ m.associado.numero_socio }}</b> · <b>{{ m.associado.nome }}</b></div>
+      <div class="dados">
+        <div><span class="rotulo">Referente a</span>{{ m.mes_ano }}</div>
+        <div><span class="rotulo">Valor</span>{{ m.valor|moeda }}</div>
+        <div><span class="rotulo">Forma</span>{{ (m.forma or '–')|capitalize }}</div>
+        <div><span class="rotulo">Enviado em</span>{{ m.enviado_em|data }}</div>
+        <div><span class="rotulo">Recebido por</span>{{ m.registrado_por.nome if m.registrado_por else 'o próprio associado (app)' }}</div>
+      </div>
+      {% if pode('conferencia') %}
+      <div class="linha-acoes">
+        <form method="post" action="{{ url_for('mensalidades.validar', mensalidade_id=m.id) }}">
+          <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+          <button class="btn btn-ok" type="submit">✓ Validar e gerar recibo</button>
+        </form>
+        <form method="post" action="{{ url_for('mensalidades.recusar', mensalidade_id=m.id) }}" class="linha-acoes">
+          <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+          <select name="motivo" aria-label="Motivo da recusa" required>
+            <option value="">Motivo da recusa…</option>
+            {% for motivo in motivos_recusa %}<option>{{ motivo }}</option>{% endfor %}
+          </select>
+          <button class="btn btn-perigo" type="submit">Recusar</button>
+        </form>
+      </div>
+      {% else %}
+      <p class="nota" style="margin: 6px 0 0">Aguardando a conferência da administração.</p>
+      {% endif %}
+    </div>
+  </div>
+  {% else %}
+  <p class="vazio">Nenhum comprovante aguardando validação.</p>
+  {% endfor %}
+</section>
+
+<div class="filtros">
+  {% for chave, rotulo in [('todas','Todas'), ('aberta','Sem comprovante'), ('em_analise','Em análise'), ('paga','Pagas'), ('recusada','Recusadas'), ('isenta','Isentas')] %}
+    <a class="pilula {{ 'ativa' if filtro == chave }}" href="{{ url_for('mensalidades.mes', mes=competencia, filtro=chave) }}">{{ rotulo }}{% if chave != 'todas' %} · {{ contagem.get(chave, 0) }}{% endif %}</a>
+  {% endfor %}
+</div>
+
+<div class="tabela-caixa">
+  <table>
+    <thead><tr><th>Nº</th><th>Associado</th><th>Situação</th><th>Ação</th></tr></thead>
+    <tbody>
+    {% for m in lista %}
+      <tr>
+        <td class="num">{{ m.associado.numero_socio }}</td>
+        <td><a href="{{ url_for('associados.ficha', associado_id=m.associado.id) }}" style="color: var(--texto); font-weight: 700; text-decoration: none">{{ m.associado.nome }}</a>
+          {% if m.status == 'recusada' %}<div class="sub" style="margin:0; color: var(--risco-texto)">Recusado: {{ m.motivo_recusa }}</div>{% endif %}</td>
+        <td>{{ etiqueta_mensalidade(m) }}</td>
+        <td>
+          {% if m.status in ('aberta', 'recusada') %}
+          <div class="linha-acoes">
+          <a class="btn btn-pequeno btn-primario" href="{{ url_for('mensalidades.receber', codigo=m.associado.numero_socio) }}">Receber</a>
+          {{ whatsapp(m.associado, 'mensalidade', 'Cobrar no WhatsApp') }}
+          </div>
+          {% elif m.status == 'paga' %}
+          <a class="btn btn-pequeno" href="{{ url_for('mensalidades.recibo', mensalidade_id=m.id) }}" target="_blank">Recibo nº {{ m.numero_recibo }}</a>
+          {% elif m.status == 'em_analise' %}<a href="#fila">{{ 'Conferir acima' if pode('conferencia') else 'Aguardando conferência' }}</a>
+          {% else %}<span class="sub" style="margin:0">Mutirante</span>{% endif %}
+        </td>
+      </tr>
+    {% else %}
+      <tr><td colspan="4" class="vazio">Nenhuma mensalidade neste filtro.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% if pode('conferencia') %}
+<section class="painel" style="background: var(--info-fundo)">
+  <h2 style="color: #1B4266">Cobrança dos mutirantes</h2>
+  {% if cobranca_desde %}
+    <p style="color: var(--info-texto); margin: 0 0 12px">Ativada desde <b>{{ cobranca_desde[5:] }}/{{ cobranca_desde[:4] }}</b>. Os mutirantes pagam a mensalidade normalmente.</p>
+    <form method="post" action="{{ url_for('mensalidades.cobranca_mutirantes') }}">
+      <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+      <button class="btn" name="acao" value="desativar" type="submit">Desativar cobrança dos mutirantes</button>
+    </form>
+  {% else %}
+    <p style="color: var(--info-texto); margin: 0 0 12px">Os mutirantes estão isentos até o próximo projeto do CDHU. Quando ele começar, escolha o mês e ative a cobrança.</p>
+    <form method="post" action="{{ url_for('mensalidades.cobranca_mutirantes') }}" class="linha-acoes">
+      <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+      <label for="desde" style="font-size: 14px; font-weight: 700">A partir de</label>
+      <input id="desde" type="month" name="desde" value="{{ competencia }}" required style="height: 40px; border: 1px solid #BAC6E4; border-radius: 8px; padding: 0 8px; font: inherit">
+      <button class="btn btn-primario" name="acao" value="ativar" type="submit" style="background: var(--azul); border-color: var(--azul)">Ativar cobrança dos mutirantes</button>
+    </form>
+  {% endif %}
+</section>
+{% endif %}
+{% endblock %}

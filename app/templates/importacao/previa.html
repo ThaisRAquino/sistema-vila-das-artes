@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block titulo %}Conferir importação{% endblock %}
+{% block conteudo %}
+<a href="{{ url_for('importacao.inicio') }}" style="font-size: 14px; text-decoration: none">← Voltar</a>
+<div class="cabecalho">
+  <div>
+    <h1>Conferir antes de importar</h1>
+    <div class="sub">{{ dados.arquivo }} · {{ linhas|length }} linha(s) · <b style="color: var(--ok-texto)">{{ validas|length }} pronta(s)</b>{% if linhas|length > validas|length %} · <b style="color: var(--risco-texto)">{{ linhas|length - validas|length }} com erro</b>{% endif %}</div>
+  </div>
+</div>
+
+{% if dados.ignoradas %}<div class="mensagem aviso">Colunas não reconhecidas (serão ignoradas): {{ dados.ignoradas|join(', ') }}.</div>{% endif %}
+{% if linhas|length > validas|length %}<div class="mensagem erro">As linhas com erro <b>não serão importadas</b>. Você pode importar as prontas agora e corrigir as outras depois numa planilha nova só com elas.</div>{% endif %}
+
+<section class="painel" style="margin-bottom: 18px">
+  <form method="post" action="{{ url_for('importacao.confirmar', token=token) }}" style="display: flex; flex-direction: column; gap: 12px">
+    <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+    <label class="consentimento"><input type="checkbox" name="fichas_assinadas" value="1"> <span>As fichas de inscrição em papel destes associados têm a <b>autorização de uso dos dados assinada</b>. (Se não marcar, a ficha fica "sem autorização registrada" até o associado aceitar o termo na área do associado.)</span></label>
+    <div class="linha-acoes">
+      <button class="btn btn-primario" type="submit" {{ 'disabled' if not validas }}>Importar {{ validas|length }} associado(s)</button>
+    </div>
+  </form>
+  <form method="post" action="{{ url_for('importacao.cancelar', token=token) }}" style="margin-top: 8px">
+    <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+    <button class="btn btn-pequeno" type="submit">Cancelar importação</button>
+  </form>
+</section>
+
+<div class="tabela-caixa">
+  <table>
+    <thead><tr><th>Linha</th><th>Nº</th><th>Nome</th><th>CPF</th><th>Categoria</th><th>Celular</th><th>Resultado</th></tr></thead>
+    <tbody>
+    {% for l in linhas %}
+      <tr {{ 'style="background: var(--risco-fundo)"'|safe if l.erros }}>
+        <td class="num">{{ l.linha }}</td>
+        <td>{{ l.numero_socio or 'automático' }}</td>
+        <td>{{ l.nome or '—' }}</td>
+        <td>{{ formatar_cpf(l.cpf) or '—' }}</td>
+        <td>{{ 'Mutirante' if l.categoria == 'mutirante' else 'Regular' }}</td>
+        <td>{{ l.celular or '—' }}</td>
+        <td>{% if l.erros %}<b style="color: var(--risco-texto)">{{ l.erros|join('; ') }}</b>{% else %}<span class="etiqueta ok">● Pronta</span>{% endif %}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

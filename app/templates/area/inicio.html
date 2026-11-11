@@ -1,0 +1,94 @@
+{% extends "area/base.html" %}
+{% from "_macros.html" import etiqueta_mensalidade %}
+{% block titulo %}Minha área{% endblock %}
+{% block conteudo %}
+<div>
+  <div class="sub" style="margin: 0">Olá,</div>
+  <h1 style="margin: 0; font-size: 26px">{{ a.nome.split()[0] }}</h1>
+</div>
+
+<div class="mensagem aviso" data-sem-internet hidden role="status">Sem internet: esta é a última carteirinha salva neste celular. O QR continua valendo.</div>
+
+<div class="carteirinha" aria-label="Carteirinha digital">
+  <div class="foto">{% if a.foto %}<img src="{{ url_for('area.minha_foto') }}?v={{ a.foto_enviada_em.timestamp()|int }}" alt="Sua foto">{% else %}{{ a.iniciais }}{% endif %}</div>
+  <div style="flex: 1; min-width: 0">
+    <div style="font-size: 11px; letter-spacing: .08em; text-transform: uppercase; opacity: .9">Carteirinha digital</div>
+    <div class="num">Nº {{ a.numero_socio }}</div>
+    <div style="font-size: 13px; margin-top: 4px">{{ a.nome }}</div>
+    <div style="font-size: 12px; opacity: .9">{{ 'Mutirante' if a.mutirante else 'Regular' }}</div>
+  </div>
+  <img class="qr" src="{{ url_for('area.meu_qr') }}" alt="QR para marcar presença na assembleia">
+</div>
+<div class="sub" style="margin: -6px 0 0; font-size: 12px">Mostre o QR na entrada da assembleia para marcar presença.</div>
+
+<div class="tres">
+  {% set cor = {'ok': ('var(--ok-fundo)', 'var(--ok-texto)'), 'atencao': ('var(--pend-fundo)', 'var(--pend-texto)'), 'risco': ('var(--risco-fundo)', 'var(--risco-texto)')} %}
+  <div style="background: {{ 'var(--risco-fundo)' if s.atrasadas >= 3 else ('var(--pend-fundo)' if s.atrasadas else 'var(--ok-fundo)') }}">Mensalidades<b>{{ 'Em dia' if not s.atrasadas else s.atrasadas ~ ' em aberto' }}</b></div>
+  <div style="background: {{ 'var(--risco-fundo)' if s.faltas >= 3 else ('var(--pend-fundo)' if s.faltas else 'var(--ok-fundo)') }}">Faltas seguidas<b>{{ s.faltas }} de 3</b></div>
+  <div style="background: {{ 'var(--pend-fundo)' if a.docs_entregues < a.docs_total else 'var(--ok-fundo)' }}">Documentos<b>{{ a.docs_entregues }} de {{ a.docs_total }}</b></div>
+</div>
+
+<section class="painel" style="display: flex; gap: 12px; align-items: center">
+  <div class="data-chip"><b>{{ proxima.strftime('%d') }}</b><span>{{ ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'][proxima.month - 1] }}</span></div>
+  <div style="font-size: 14px; line-height: 1.45"><b>Próxima assembleia</b><br>Domingo, {{ proxima|data }}{% if s.faltas == 2 %}<br><span style="color: var(--pend-texto); font-weight: 700">Não falte: você está com 2 faltas seguidas.</span>{% endif %}</div>
+</section>
+
+<section class="painel">
+  <h2>Mensalidades · R$ 50</h2>
+  <div class="lista-linhas">
+    {% for m in a.mensalidades[:4] %}
+    <div style="flex-wrap: wrap">
+      <span>{{ m.mes_ano }}{% if m.status == 'recusada' %}<br><span class="sub" style="margin:0; color: var(--risco-texto)">Recusado: {{ m.motivo_recusa }}</span>{% endif %}</span>
+      {{ etiqueta_mensalidade(m) }}
+      {% if m.status in ('aberta', 'recusada') %}
+      <form method="post" enctype="multipart/form-data" action="{{ url_for('area.enviar_comprovante', mensalidade_id=m.id) }}" style="width: 100%; display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px">
+        <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+        <input type="file" name="comprovante" accept="image/*,application/pdf" capture="environment" aria-label="Foto do comprovante de {{ m.mes_ano }}" required style="flex: 1 1 180px; font-size: 13px">
+        <button class="btn btn-pequeno btn-primario" type="submit">Enviar comprovante</button>
+      </form>
+      {% endif %}
+    </div>
+    {% else %}
+    <div><span class="sub" style="margin:0">Nenhuma mensalidade ainda.</span></div>
+    {% endfor %}
+  </div>
+  <p class="nota" style="margin: 10px 0 0">A mensalidade só aparece como paga depois que a equipe confere o comprovante.</p>
+</section>
+
+<section class="painel">
+  <h2>Presenças</h2>
+  <div class="lista-linhas">
+    {% for asm in assembleias %}
+    <div><span>{{ asm.data|data }}</span>
+      {% if asm.id in presentes %}<b style="color: var(--ok-texto)">● Presente</b>{% elif not asm.encerrada %}<span class="sub" style="margin:0">Lista aberta</span>{% else %}<b style="color: var(--risco-texto)">○ Falta</b>{% endif %}</div>
+    {% else %}
+    <div><span class="sub" style="margin:0">Nenhuma assembleia ainda.</span></div>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="painel" id="minha-foto">
+  <h2>Minha foto</h2>
+  {% if a.imagem_autorizada_em %}
+  <form method="post" enctype="multipart/form-data" action="{{ url_for('area.enviar_foto') }}" style="display: flex; flex-direction: column; gap: 10px">
+    <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+    <div class="campo"><label for="foto">{{ 'Trocar foto' if a.foto else 'Enviar foto' }} (rosto de frente, com boa luz)</label>
+      <input id="foto" type="file" name="foto" accept="image/*" capture="user" required></div>
+    <button class="btn btn-primario" type="submit">Salvar foto</button>
+  </form>
+  {% if a.foto %}
+  <form method="post" action="{{ url_for('area.remover_foto') }}" style="margin-top: 8px">
+    <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+    <button class="btn btn-pequeno btn-perigo" type="submit">Remover minha foto</button>
+  </form>
+  {% endif %}
+  {% else %}
+  <p style="margin: 0 0 10px; font-size: 14px">Para colocar sua foto na carteirinha, autorize o uso da imagem no termo.</p>
+  <a class="btn" href="{{ url_for('area.termo') }}">Ver termo e autorizar</a>
+  {% endif %}
+</section>
+
+<div class="nota" data-dica-iphone hidden><b>Quer o app no iPhone?</b> No Safari, toque em Compartilhar (o quadrado com a seta) e depois em <b>Adicionar à Tela de Início</b>.</div>
+
+<p class="nota">Termo aceito em {{ a.termo_aceito_em|data }} (versão {{ a.termo_versao }}). <a href="{{ url_for('area.termo') }}">Ver ou mudar autorizações</a>.</p>
+{% endblock %}
