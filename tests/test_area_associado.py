@@ -227,3 +227,11 @@ def test_associado_nao_entra_no_sistema_da_equipe(app):
     c = logado_com_termo(app)
     r = c.get("/associados/")
     assert r.status_code == 302 and "/login" in r.headers["Location"]
+
+
+def test_campos_de_foto_deixam_escolher_da_galeria(app):
+    """Sem o atributo capture, o celular oferece câmera OU galeria (print do Pix, foto já tirada)."""
+    import pathlib
+    pasta = pathlib.Path(__file__).resolve().parent.parent / "app" / "templates"
+    for arquivo in pasta.rglob("*.html"):
+        assert "capture=" not in arquivo.read_text(encoding="utf-8"), arquivo.name
