@@ -51,11 +51,11 @@ def salvar_foto(associado, arquivo):
     """Recorta em quadrado, reduz para 600 px e salva como JPG (remove dados ocultos da foto, como localização)."""
     if not arquivo or not arquivo.filename:
         return "Escolha uma foto."
-    try:
-        imagem = Image.open(arquivo.stream)
-        imagem = ImageOps.exif_transpose(imagem).convert("RGB")
-    except (UnidentifiedImageError, OSError):
-        return "Não foi possível ler a imagem. Envie uma foto JPG ou PNG."
+    from .imagens import abrir_foto
+
+    imagem = abrir_foto(arquivo.stream)
+    if imagem is None:
+        return "Não foi possível ler a imagem. Tire a foto de novo ou escolha outra da galeria."
     lado = min(imagem.size)
     esquerda, topo = (imagem.width - lado) // 2, (imagem.height - lado) // 2
     imagem = imagem.crop((esquerda, topo, esquerda + lado, topo + lado)).resize((600, 600))

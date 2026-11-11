@@ -235,3 +235,24 @@ def test_campos_de_foto_deixam_escolher_da_galeria(app):
     pasta = pathlib.Path(__file__).resolve().parent.parent / "app" / "templates"
     for arquivo in pasta.rglob("*.html"):
         assert "capture=" not in arquivo.read_text(encoding="utf-8"), arquivo.name
+
+
+def test_foto_heic_do_celular_e_aceita(app):
+    """iPhones e vários Android salvam fotos em HEIC: o sistema converte para JPG."""
+    from pillow_heif import register_heif_opener
+    register_heif_opener()
+    buffer = io.BytesIO()
+    Image.new("RGB", (3000, 4000), (90, 110, 170)).save(buffer, "HEIF")
+    buffer.seek(0)
+    c = logado_com_termo(app)
+    c.post("/associado/foto", data={"foto": (buffer, "IMG_1234.HEIC")}, content_type="multipart/form-data")
+    with app.app_context():
+        a = ana()
+        assert a.foto and a.foto.endswith(".jpg")
+        with Image.open(os.path.join(pasta_fotos(), a.foto)) as img:
+            assert img.size == (600, 600)
+    assert "Sua foto" in c.get("/associado/").get_data(as_text=True)
+
+
+def test_foto_grande_de_celular_ate_20mb_passa(app):
+    assert app.config["MAX_CONTENT_LENGTH"] == 20 * 1024 * 1024

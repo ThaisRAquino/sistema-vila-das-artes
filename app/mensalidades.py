@@ -28,7 +28,7 @@ from .regras import (
 
 bp = Blueprint("mensalidades", __name__, url_prefix="/mensalidades")
 
-EXTENSOES = {"jpg", "jpeg", "png", "pdf", "webp"}
+EXTENSOES = {"jpg", "jpeg", "png", "webp", "heic", "heif", "pdf"}
 MOTIVOS_RECUSA = (
     "Valor diferente de R$ 50,00",
     "Comprovante ilegível",
@@ -50,17 +50,17 @@ def salvar_comprovante(arquivo):
         return None, "Anexe a foto ou o PDF do comprovante."
     extensao = arquivo.filename.rsplit(".", 1)[-1].lower() if "." in arquivo.filename else ""
     if extensao not in EXTENSOES:
-        return None, "Formato não aceito. Use foto (JPG/PNG) ou PDF."
+        return None, "Formato não aceito. Use uma foto (JPG, PNG ou HEIC) ou PDF."
     if extensao == "pdf":
         nome = f"{uuid.uuid4().hex}.pdf"
         arquivo.save(os.path.join(pasta_comprovantes(), nome))
         return nome, None
     # Foto: reduz para no máximo 1600 px e salva em JPG (cabe muito mais no servidor e apaga a localização da foto)
-    from PIL import Image, ImageOps, UnidentifiedImageError
-    try:
-        imagem = ImageOps.exif_transpose(Image.open(arquivo.stream))
-    except (UnidentifiedImageError, OSError):
-        return None, "Não foi possível abrir a imagem. Tire a foto de novo ou envie em PDF."
+    from .imagens import abrir_foto
+
+    imagem = abrir_foto(arquivo.stream)
+    if imagem is None:
+        return None, "Não foi possível abrir a imagem. Tire a foto de novo, escolha outra da galeria ou envie em PDF."
     imagem.thumbnail((1600, 1600))
     nome = f"{uuid.uuid4().hex}.jpg"
     imagem.convert("RGB").save(os.path.join(pasta_comprovantes(), nome), "JPEG", quality=80, optimize=True)

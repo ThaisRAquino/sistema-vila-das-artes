@@ -40,7 +40,7 @@ def create_app(config=None):
         SESSION_COOKIE_HTTPONLY=True,
         SESSION_COOKIE_SAMESITE="Lax",
         WTF_CSRF_ENABLED=True,
-        MAX_CONTENT_LENGTH=8 * 1024 * 1024,  # comprovantes de até 8 MB
+        MAX_CONTENT_LENGTH=20 * 1024 * 1024,  # fotos de celular de até 20 MB (o sistema reduz ao salvar)
         PERMANENT_SESSION_LIFETIME=timedelta(hours=8),  # login vale no máximo 8 horas
     )
     if config:
@@ -124,7 +124,7 @@ def create_app(config=None):
     @app.errorhandler(413)
     def arquivo_grande(_erro):
         from flask import flash, redirect, request as req
-        flash("Arquivo muito grande. Envie uma foto ou PDF de até 8 MB.", "erro")
+        flash("Arquivo muito grande. Envie uma foto ou PDF de até 20 MB.", "erro")
         return redirect(req.referrer or "/")
 
     _configurar_csrf(app)

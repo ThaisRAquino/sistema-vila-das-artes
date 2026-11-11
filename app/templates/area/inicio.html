@@ -43,7 +43,7 @@
       {% if m.status in ('aberta', 'recusada') %}
       <form method="post" enctype="multipart/form-data" action="{{ url_for('area.enviar_comprovante', mensalidade_id=m.id) }}" style="width: 100%; display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px">
         <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
-        <input type="file" name="comprovante" accept="image/*,application/pdf" aria-label="Foto do comprovante de {{ m.mes_ano }}" required style="flex: 1 1 180px; font-size: 13px">
+        <input type="file" name="comprovante" data-reduzir accept="image/*,application/pdf" aria-label="Foto do comprovante de {{ m.mes_ano }}" required style="flex: 1 1 180px; font-size: 13px">
         <button class="btn btn-pequeno btn-primario" type="submit">Enviar comprovante</button>
       </form>
       {% endif %}
@@ -73,7 +73,7 @@
   <form method="post" enctype="multipart/form-data" action="{{ url_for('area.enviar_foto') }}" style="display: flex; flex-direction: column; gap: 10px">
     <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
     <div class="campo"><label for="foto">{{ 'Trocar foto' if a.foto else 'Enviar foto' }} (rosto de frente, com boa luz): tire na hora ou escolha da galeria</label>
-      <input id="foto" type="file" name="foto" accept="image/*" required></div>
+      <input id="foto" type="file" name="foto" data-reduzir accept="image/*" required></div>
     <button class="btn btn-primario" type="submit">Salvar foto</button>
   </form>
   {% if a.foto %}

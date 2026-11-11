@@ -44,7 +44,7 @@
           <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
           <input type="hidden" name="forma" value="pix">
           <input type="hidden" name="voltar" value="{{ voltar }}">
-          <input type="file" name="comprovante" accept="image/*,application/pdf" required aria-label="Foto do comprovante de {{ m.mes_ano }}" style="flex: 1 1 160px; font-size: 13px; min-width: 0">
+          <input type="file" name="comprovante" data-reduzir accept="image/*,application/pdf" required aria-label="Foto do comprovante de {{ m.mes_ano }}" style="flex: 1 1 160px; font-size: 13px; min-width: 0">
           <button class="btn" type="submit">Enviar comprovante</button>
         </form>
       </div>

@@ -3,13 +3,14 @@
    - Carteirinha do associado (página inicial, QR e foto): a última versão fica guardada no celular
      e aparece mesmo sem internet, para mostrar o QR na entrada da assembleia.
    - Páginas da equipe NÃO são guardadas (têm dados de todos os associados). */
-const VERSAO = "vda-v1";
+const VERSAO = "vda-v2";
 const ESTATICOS = VERSAO + "-estaticos";
 const CARTEIRINHA = "vda-carteirinha";
 const PRE_CACHE = [
   "/static/css/style.css",
   "/static/img/logo.jpg",
   "/static/js/pwa.js",
+  "/static/js/fotos.js",
   "/static/icones/icone-192.png",
   "/static/offline.html",
 ];
@@ -38,10 +39,14 @@ self.addEventListener("fetch", (evento) => {
   if (url.origin !== location.origin) return;
 
   if (url.pathname.startsWith("/static/")) {
+    // Mostra o que está guardado (rápido) e busca a versão nova em segundo plano: atualizações chegam sozinhas
     evento.respondWith(
-      caches.match(req).then((guardado) => guardado || fetch(req).then((resp) => {
-        if (resp.ok) { const copia = resp.clone(); caches.open(ESTATICOS).then((c) => c.put(req, copia)); }
-        return resp;
+      caches.open(ESTATICOS).then((cache) => cache.match(req).then((guardado) => {
+        const daRede = fetch(req).then((resp) => {
+          if (resp.ok) cache.put(req, resp.clone());
+          return resp;
+        }).catch(() => guardado);
+        return guardado || daRede;
       }))
     );
     return;
