@@ -37,24 +37,38 @@ def presidentes_ativos():
     ).scalar()
 
 
+def normalizar_login(texto):
+    """'Denis Rocha' -> 'denis.rocha' (sem acento, sem espaço, minúsculo)."""
+    import re
+    import unicodedata
+
+    texto = unicodedata.normalize("NFKD", texto or "").encode("ascii", "ignore").decode().lower().strip()
+    texto = re.sub(r"\s+", ".", texto)
+    texto = re.sub(r"[^a-z0-9._]", "", texto)
+    return re.sub(r"\.{2,}", ".", texto).strip("._")[:60]
+
+
+def pagina(credencial=None):
+    usuarios = db.session.execute(db.select(Usuario).order_by(Usuario.ativo.desc(), Usuario.nome)).scalars().all()
+    return render_template("equipe/lista.html", usuarios=usuarios, perfis=PERFIS, credencial=credencial,
+                           endereco=url_for("auth.login", _external=True))
+
+
 @bp.route("/")
 @presidente_required
 def lista():
-    usuarios = db.session.execute(db.select(Usuario).order_by(Usuario.ativo.desc(), Usuario.nome)).scalars().all()
-    return render_template("equipe/lista.html", usuarios=usuarios, perfis=PERFIS)
+    return pagina()
 
 
 @bp.route("/novo", methods=["POST"])
 @presidente_required
 def novo():
     nome = request.form.get("nome", "").strip()
-    login = request.form.get("login", "").strip().lower()
+    login = normalizar_login(request.form.get("login") or nome)  # vazio: usa o nome (ex.: denis.rocha)
     perfil = request.form.get("perfil", "voluntario")
     perfil = "administracao" if perfil == "equipe" else perfil  # nome antigo
     if not nome or not login or perfil not in PERFIS:
         flash("Preencha o nome e o usuário.", "erro")
-    elif not login.replace(".", "").replace("_", "").isalnum() or len(login) > 60:
-        flash("O usuário só pode ter letras, números, ponto e sublinhado (ex.: maria.silva).", "erro")
     elif db.session.execute(db.select(Usuario).filter_by(login=login)).scalar_one_or_none():
         flash(f"Já existe o usuário {login}.", "erro")
     else:
@@ -63,8 +77,8 @@ def novo():
         usuario.definir_senha(senha)
         db.session.add(usuario)
         db.session.commit()
-        flash(f"{nome} cadastrado(a). Usuário: {login} · Senha provisória: {senha} "
-              "(anote e entregue; no primeiro acesso a pessoa cria a própria senha).", "ok")
+        # mostra os dados de acesso na própria página (num quadro fixo, não numa mensagem que some)
+        return pagina({"nome": nome, "login": login, "senha": senha, "novo": True})
     return redirect(url_for("equipe.lista"))
 
 
@@ -77,8 +91,7 @@ def redefinir_senha(usuario_id):
     usuario.trocar_senha = True
     limpar(f"equipe:{usuario.login}")  # desfaz bloqueio por senha errada
     db.session.commit()
-    flash(f"Nova senha provisória de {usuario.nome}: {senha}", "ok")
-    return redirect(url_for("equipe.lista"))
+    return pagina({"nome": usuario.nome, "login": usuario.login, "senha": senha, "novo": False})
 
 
 @bp.route("/<int:usuario_id>/ativo", methods=["POST"])

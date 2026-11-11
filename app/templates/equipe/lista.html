@@ -8,12 +8,29 @@
   </div>
 </div>
 
+{% if credencial %}
+{% set texto_whats = "Olá, " ~ credencial.nome.split()[0] ~ "! Seu acesso ao Sistema Vila das Artes:\n" ~ endereco ~ "\nUsuário: " ~ credencial.login ~ "\nSenha provisória: " ~ credencial.senha ~ "\nNo primeiro acesso, o sistema pede para você criar a sua própria senha." %}
+<section class="painel" id="credencial" style="margin-bottom: 18px; background: var(--ok-fundo); border: 2px solid var(--ok-texto)">
+  <h2 style="margin: 0 0 6px; color: var(--ok-texto)">{{ 'Pessoa cadastrada' if credencial.novo else 'Nova senha provisória' }}: {{ credencial.nome }}</h2>
+  <p style="margin: 0 0 12px; font-size: 14px">Anote ou envie agora. <b>Esta senha não aparece de novo</b>; se perder, use "Nova senha provisória".</p>
+  <div class="lista-linhas" style="max-width: 520px; background: #fff; border-radius: 12px; padding: 4px 14px">
+    <div><span>Endereço</span><b>{{ endereco }}</b></div>
+    <div><span>Usuário</span><b style="font-size: 18px">{{ credencial.login }}</b></div>
+    <div><span>Senha provisória</span><b style="font-size: 22px; letter-spacing: .12em">{{ credencial.senha }}</b></div>
+  </div>
+  <div class="linha-acoes" style="margin-top: 12px">
+    <a class="btn btn-whats" href="https://wa.me/?text={{ texto_whats|urlencode }}" target="_blank" rel="noopener">Enviar pelo WhatsApp</a>
+    <button class="btn" type="button" onclick="navigator.clipboard && navigator.clipboard.writeText(this.dataset.texto).then(() => { this.textContent = 'Copiado!'; })" data-texto="{{ texto_whats }}">Copiar dados de acesso</button>
+  </div>
+</section>
+{% endif %}
+
 <section class="painel" style="margin-bottom: 18px">
   <h2>Cadastrar pessoa da equipe</h2>
   <form method="post" action="{{ url_for('equipe.novo') }}" style="display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap">
     <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
     <div class="campo" style="flex: 2 1 220px"><label for="nome">Nome</label><input id="nome" name="nome" required></div>
-    <div class="campo" style="flex: 1 1 160px"><label for="login">Usuário</label><input id="login" name="login" placeholder="ex.: maria.silva" autocomplete="off" required></div>
+    <div class="campo" style="flex: 1 1 160px"><label for="login">Usuário</label><input id="login" name="login" placeholder="ex.: denis.rocha" autocomplete="off"><span class="ajuda">Se deixar em branco, o sistema cria a partir do nome.</span></div>
     <div class="campo" style="flex: 1 1 180px"><label for="perfil">Perfil</label>
       <select id="perfil" name="perfil">{% for valor, rotulo in perfis.items() %}<option value="{{ valor }}" {{ 'selected' if valor == 'voluntario' }}>{{ rotulo }}</option>{% endfor %}</select></div>
     <button class="btn btn-primario" type="submit">Cadastrar</button>

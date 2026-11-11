@@ -93,7 +93,9 @@ def test_bloqueio_do_login_da_equipe_vale_mesmo_trocando_de_navegador(app):
     with app.app_context():
         uid = usuario("equipe1").id
     r = c.post(f"/equipe/{uid}/senha", follow_redirects=True)   # presidente desbloqueia com senha nova
-    senha = re.search(r"provisória de Equipe Um: (\w+)", r.get_data(as_text=True)).group(1)
+    pagina = r.get_data(as_text=True)
+    assert "Nova senha provisória</h2>" in pagina or "Nova senha provisória: Equipe Um" in pagina
+    senha = re.search(r"Senha provisória: (\w+)", pagina).group(1)
     _, r = entrar(app, "equipe1", senha)
     assert r.status_code == 302
     with app.app_context():
@@ -114,3 +116,22 @@ def test_banco_antigo_ganha_colunas_novas_sem_perder_dados(tmp_path):
     with app.app_context():
         u = db.session.get(Usuario, 1)
         assert u.login == "admin" and not u.trocar_senha
+
+
+
+def test_usuario_com_espaco_e_acento_vira_login_valido_e_a_senha_fica_visivel(app):
+    c, _ = entrar(app, "presidente")
+    r = c.post("/equipe/novo", data={"nome": "Dênis Rocha", "login": "Dênis Rocha", "perfil": "presidente"})
+    pagina = r.get_data(as_text=True)
+    assert "Pessoa cadastrada" in pagina and "denis.rocha" in pagina and "não aparece de novo" in pagina
+    assert "Enviar pelo WhatsApp" in pagina
+    senha = re.search(r"Senha provisória: (\w+)", pagina).group(1)
+    _, r = entrar(app, "denis.rocha", senha)
+    assert r.headers["Location"].endswith("/equipe/minha-senha")
+
+
+def test_usuario_em_branco_usa_o_nome(app):
+    c, _ = entrar(app, "presidente")
+    c.post("/equipe/novo", data={"nome": "Maria da Silva", "login": "", "perfil": "voluntario"})
+    with app.app_context():
+        assert usuario("maria.da.silva").perfil == "voluntario"
