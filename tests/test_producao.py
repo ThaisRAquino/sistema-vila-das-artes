@@ -90,3 +90,15 @@ def test_backup_guarda_so_os_mais_recentes(tmp_path, monkeypatch):
     monkeypatch.setattr(backup, "PASTA_BACKUP", str(pasta))
     backup.fazer_backup(manter=3)
     assert len(os.listdir(pasta)) == 3
+
+
+def test_link_compartilhado_tem_previa_com_imagem_grande(tmp_path):
+    """Ao mandar o link no WhatsApp, aparece a logo nítida (imagem 1200x630), não o ícone pequeno borrado."""
+    from app import create_app
+    app = create_app({"TESTING": True, "SQLALCHEMY_DATABASE_URI": f"sqlite:///{tmp_path / 'og.db'}"})
+    c = app.test_client()
+    for pagina in ("/login", "/associado/entrar"):
+        html = c.get(pagina).get_data(as_text=True)
+        assert 'property="og:image" content="http://localhost/static/img/compartilhar.jpg"' in html
+        assert 'og:image:width" content="1200"' in html
+    assert c.get("/static/img/compartilhar.jpg").status_code == 200
