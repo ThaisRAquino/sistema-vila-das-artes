@@ -41,6 +41,7 @@
     </div>
   </aside>
   <main class="conteudo">
+    {% include "_dica_chrome.html" %}
     {% with mensagens = get_flashed_messages(with_categories=true) %}
       {% if mensagens %}
       <div class="mensagens" role="status">

@@ -43,6 +43,7 @@
     {% endif %}
     </div>
   </div>
+  {% include "_dica_chrome.html" %}
   {% with mensagens = get_flashed_messages(with_categories=true) %}
     {% for categoria, texto in mensagens %}<div class="mensagem {{ categoria }}" role="status">{{ texto }}</div>{% endfor %}
   {% endwith %}

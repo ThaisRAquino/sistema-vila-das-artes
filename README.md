@@ -93,7 +93,7 @@ python run.py
 python -m pytest
 ```
 
-São 83 testes: login, cadastro, nº de sócio e CPF sem repetição, documentos, QR, validação de comprovante, recibo, cobrança dos mutirantes, presença por nº e QR, faltas e mensalidades seguidas, avisos de WhatsApp, proteção dos formulários, área do associado (código de acesso, bloqueio, termo obrigatório, foto só com autorização, um associado não mexe nos dados de outro), usuários da equipe, importação por planilha, códigos em lote, app instalável, modo de produção, backup, exportação da lista, desligamento pela diretoria, indicadores, perfis da equipe e recebimento em dinheiro, fotos HEIC do celular e senha provisória da equipe.
+São 84 testes: login, cadastro, nº de sócio e CPF sem repetição, documentos, QR, validação de comprovante, recibo, cobrança dos mutirantes, presença por nº e QR, faltas e mensalidades seguidas, avisos de WhatsApp, proteção dos formulários, área do associado (código de acesso, bloqueio, termo obrigatório, foto só com autorização, um associado não mexe nos dados de outro), usuários da equipe, importação por planilha, códigos em lote, app instalável, modo de produção, backup, exportação da lista, desligamento pela diretoria, indicadores, perfis da equipe e recebimento em dinheiro, fotos HEIC do celular e senha provisória da equipe.
 
 ## Estrutura
 

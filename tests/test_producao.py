@@ -102,3 +102,13 @@ def test_link_compartilhado_tem_previa_com_imagem_grande(tmp_path):
         assert 'property="og:image" content="http://localhost/static/img/compartilhar.jpg"' in html
         assert 'og:image:width" content="512"' in html
     assert c.get("/static/img/compartilhar.jpg").status_code == 200
+
+
+def test_aviso_para_instalar_pelo_chrome_existe_nas_duas_areas(tmp_path):
+    """No navegador da Samsung o Play Protect bloqueia o app: as páginas trazem o aviso 'Abrir no Chrome'."""
+    from app import create_app
+    app = create_app({"TESTING": True, "SQLALCHEMY_DATABASE_URI": f"sqlite:///{tmp_path / 'ch.db'}"})
+    c = app.test_client()
+    assert "data-dica-chrome" in c.get("/associado/entrar").get_data(as_text=True)
+    js = c.get("/static/js/pwa.js").get_data(as_text=True)
+    assert "SamsungBrowser" in js and "package=com.android.chrome" in js
