@@ -1,5 +1,4 @@
 """Assembleias: presença pelo nº de sócio ou pelo QR da carteirinha."""
-from datetime import date
 
 from flask import Blueprint, abort, flash, jsonify, redirect, render_template, request, url_for
 from flask_login import current_user, login_required

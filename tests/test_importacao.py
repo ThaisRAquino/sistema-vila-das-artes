@@ -1,7 +1,6 @@
 """Testes da importação por planilha e dos códigos de acesso em lote."""
 import io
 import os
-import re
 from datetime import date, datetime, timedelta
 
 import pytest

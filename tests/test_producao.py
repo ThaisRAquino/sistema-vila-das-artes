@@ -3,7 +3,6 @@ import os
 import sqlite3
 import zipfile
 
-import pytest
 
 import backup
 from app import create_app, db

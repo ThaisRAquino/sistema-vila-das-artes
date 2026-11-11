@@ -17,7 +17,6 @@ from flask import (
     session,
     url_for,
 )
-from PIL import Image, ImageOps, UnidentifiedImageError
 
 from . import db, termo
 from .models import Assembleia, Associado, Mensalidade
