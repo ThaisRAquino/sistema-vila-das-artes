@@ -45,7 +45,7 @@
     document.querySelectorAll("[data-instalar], [data-dica-iphone], [data-dica-chrome]").forEach(function (b) { b.hidden = true; });
   });
   // iPhone não tem botão de instalar: mostra a dica de "Adicionar à Tela de Início"
-  var iphone = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  var iphone = /iphone|ipad|ipod/i.test(navigator.userAgent) || (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1);
   if (iphone && !instalado) {
     document.querySelectorAll("[data-dica-iphone]").forEach(function (b) { b.hidden = false; });
   }
