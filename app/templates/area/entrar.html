@@ -8,7 +8,7 @@
 </div>
 <form method="post" class="painel" style="display: flex; flex-direction: column; gap: 14px">
   <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
-  <div class="campo"><label for="cpf">CPF</label><input id="cpf" name="cpf" inputmode="numeric" autocomplete="username" placeholder="000.000.000-00" required></div>
+  <div class="campo"><label for="cpf">CPF</label><input id="cpf" name="cpf" inputmode="numeric" autocomplete="username" placeholder="000.000.000-00" maxlength="14" data-mascara="cpf" required></div>
   <div class="campo"><label for="senha">Senha</label><input id="senha" name="senha" type="password" autocomplete="current-password" required></div>
   <button class="btn btn-primario" type="submit">Entrar</button>
   <a href="{{ url_for('area.primeiro_acesso') }}" style="text-align: center">Primeiro acesso ou esqueci a senha</a>

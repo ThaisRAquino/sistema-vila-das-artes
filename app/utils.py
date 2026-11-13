@@ -27,6 +27,12 @@ def formatar_cpf(cpf):
     return f"{cpf[:3]}.{cpf[3:6]}.{cpf[6:9]}-{cpf[9:]}"
 
 
+def formatar_cep(cep):
+    """06803-000"""
+    cep = somente_digitos(cep)
+    return f"{cep[:5]}-{cep[5:]}" if len(cep) == 8 else (cep or "")
+
+
 def mascarar_cpf(cpf):
     """Mostra só o miolo do CPF (LGPD): ***.456.789-**"""
     cpf = somente_digitos(cpf)

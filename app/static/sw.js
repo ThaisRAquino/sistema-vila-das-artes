@@ -3,7 +3,7 @@
    - Carteirinha do associado (página inicial, QR e foto): a última versão fica guardada no celular
      e aparece mesmo sem internet, para mostrar o QR na entrada da assembleia.
    - Páginas da equipe NÃO são guardadas (têm dados de todos os associados). */
-const VERSAO = "vda-v4";
+const VERSAO = "vda-v5";
 const ESTATICOS = VERSAO + "-estaticos";
 const CARTEIRINHA = "vda-carteirinha";
 const PRE_CACHE = [
@@ -11,6 +11,7 @@ const PRE_CACHE = [
   "/static/img/logo.jpg",
   "/static/js/pwa.js",
   "/static/js/fotos.js",
+  "/static/js/mascaras.js",
   "/static/icones/icone-192.png",
   "/static/offline.html",
 ];

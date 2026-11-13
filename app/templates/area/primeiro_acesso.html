@@ -7,7 +7,7 @@
 </div>
 <form method="post" class="painel" style="display: flex; flex-direction: column; gap: 14px">
   <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
-  <div class="campo"><label for="cpf">CPF</label><input id="cpf" name="cpf" inputmode="numeric" placeholder="000.000.000-00" required></div>
+  <div class="campo"><label for="cpf">CPF</label><input id="cpf" name="cpf" inputmode="numeric" placeholder="000.000.000-00" maxlength="14" data-mascara="cpf" required></div>
   <div class="campo"><label for="codigo">Código da associação</label><input id="codigo" name="codigo" autocomplete="one-time-code" maxlength="6" style="text-transform: uppercase; letter-spacing: .2em; font-weight: 700" required></div>
   <div class="campo"><label for="senha">Crie uma senha</label><input id="senha" name="senha" type="password" autocomplete="new-password" minlength="6" required><span class="ajuda">Pelo menos 6 caracteres.</span></div>
   <div class="campo"><label for="confirmar">Repita a senha</label><input id="confirmar" name="confirmar" type="password" autocomplete="new-password" minlength="6" required></div>

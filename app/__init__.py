@@ -201,9 +201,10 @@ def _configurar_csrf(app):
 
 
 def _registrar_filtros(app):
-    from .utils import formatar_cpf, mascarar_cpf, formatar_data, formatar_moeda
+    from .utils import formatar_cep, formatar_cpf, mascarar_cpf, formatar_data, formatar_moeda
 
     app.jinja_env.filters["cpf"] = formatar_cpf
+    app.jinja_env.filters["cep"] = formatar_cep
     app.jinja_env.filters["cpf_mascarado"] = mascarar_cpf
     app.jinja_env.filters["data"] = formatar_data
     app.jinja_env.filters["moeda"] = formatar_moeda

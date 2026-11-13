@@ -155,7 +155,7 @@
       <div><span class="rotulo">Estado civil</span>{{ (a.estado_civil or '–')|capitalize }}</div>
       <div><span class="rotulo">Profissão</span>{{ a.profissao or '–' }}</div>
       {% if pode('conferencia') %}<div><span class="rotulo">Renda familiar</span>{{ a.renda_familiar_total|moeda or '–' }}</div>{% endif %}
-      <div style="grid-column: 1 / -1"><span class="rotulo">Endereço</span>{% set rua = [a.rua, a.numero]|select|join(', ') %}{{ [rua, a.bairro, (a.cidade or '') ~ '/' ~ (a.uf or '')]|select|join(' · ') }}</div>
+      <div style="grid-column: 1 / -1"><span class="rotulo">Endereço</span>{% set rua = [a.rua, a.numero]|select|join(', ') %}{{ [rua, a.bairro, (a.cidade or '') ~ '/' ~ (a.uf or ''), ('CEP ' ~ a.cep|cep) if a.cep else '']|select|join(' · ') }}</div>
       <div><span class="rotulo">Moradia</span>{{ (a.tipo_residencia or '–')|capitalize }}{% if a.valor_aluguel %} · {{ a.valor_aluguel|moeda }}{% endif %}</div>
       <div><span class="rotulo">LGPD</span>{% if a.termo_aceito_em %}Termo aceito no app em {{ a.termo_aceito_em|data }}{% elif a.consentimento_lgpd_em %}Autorizado na ficha em {{ a.consentimento_lgpd_em|data }}{% else %}Sem autorização registrada{% endif %}</div>
     </div>

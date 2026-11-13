@@ -142,3 +142,27 @@ def test_csrf_bloqueia_post_sem_token(tmp_path):
     app = create_app({"SQLALCHEMY_DATABASE_URI": f"sqlite:///{tmp_path / 'csrf.db'}"})
     resposta = app.test_client().post("/login", data={"login": "x", "senha": "y"})
     assert resposta.status_code == 400
+
+
+def test_campos_com_mascara_e_cep_que_preenche_o_endereco(cliente):
+    """Pedido do presidente: CPF, RG, CEP e telefones já aparecem com pontos; o CEP busca o endereço."""
+    pagina = cliente.get("/associados/novo").get_data(as_text=True)
+    for mascara in ("cpf", "rg", "cep", "cnpj", "celular", "telefone", "titulo"):
+        assert f'data-mascara="{mascara}"' in pagina
+    assert "data-buscar-endereco" in pagina and 'id="cep-aviso"' in pagina
+    assert pagina.index('id="cep"') < pagina.index('id="rua"')  # CEP vem antes da rua
+    assert "js/mascaras.js" in pagina
+    js = cliente.get("/static/js/mascaras.js").get_data(as_text=True)
+    assert "viacep.com.br/ws/" in js
+
+
+def test_dados_com_pontos_sao_guardados_so_com_numeros(app, cliente):
+    cadastrar(cliente, cpf="529.982.247-25", cep="06803-000", cnpj="12.345.678/0001-95",
+              rg="12.345.678-9", celular="(11) 91152-1567")
+    with app.app_context():
+        a = db.session.execute(db.select(Associado)).scalar_one()
+        assert a.cpf == "52998224725" and a.cep == "06803000" and a.cnpj == "12345678000195"
+        assert a.rg == "12.345.678-9" and a.celular == "(11) 91152-1567"
+        aid = a.id
+    ficha = cliente.get(f"/associados/{aid}").get_data(as_text=True)
+    assert "CEP 06803-000" in ficha

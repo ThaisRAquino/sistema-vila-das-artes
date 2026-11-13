@@ -43,9 +43,9 @@
     <legend>Titular</legend>
     <div class="campos">
       {{ campo('nome', 'Nome completo', a.nome, classe='largo', extra='required') }}
-      {{ campo('cpf', 'CPF', a.cpf|cpf, extra='inputmode="numeric" required placeholder="000.000.000-00"') }}
+      {{ campo('cpf', 'CPF', a.cpf|cpf, extra='inputmode="numeric" required placeholder="000.000.000-00" maxlength="14" data-mascara="cpf"') }}
       {{ campo('data_nascimento', 'Data de nascimento', data(a.data_nascimento), 'date') }}
-      {{ campo('rg', 'RG', a.rg) }}
+      {{ campo('rg', 'RG', a.rg, extra='placeholder="00.000.000-0" data-mascara="rg"') }}
       {{ campo('orgao_emissor', 'Órgão emissor', a.orgao_emissor) }}
       {{ campo('uf_rg', 'UF do RG', a.uf_rg, extra='maxlength="2"') }}
       {{ campo('data_emissao_rg', 'Data de emissão do RG', data(a.data_emissao_rg), 'date') }}
@@ -70,11 +70,11 @@
       {{ campo('profissao', 'Profissão', a.profissao) }}
       {{ campo('renda', 'Renda (R$)', valor(a.renda), extra='inputmode="decimal"') }}
       {{ campo('empresa', 'Empresa', a.empresa) }}
-      {{ campo('cnpj', 'CNPJ', a.cnpj, extra='inputmode="numeric"') }}
+      {{ campo('cnpj', 'CNPJ', a.cnpj, extra='inputmode="numeric" placeholder="00.000.000/0000-00" maxlength="18" data-mascara="cnpj"') }}
       {{ campo('data_admissao', 'Data de admissão', data(a.data_admissao), 'date') }}
       {{ campo('ctps', 'CTPS nº', a.ctps) }}
       {{ campo('serie_ctps', 'Série', a.serie_ctps) }}
-      {{ campo('titulo_eleitor', 'Título de eleitor', a.titulo_eleitor) }}
+      {{ campo('titulo_eleitor', 'Título de eleitor', a.titulo_eleitor, extra='inputmode="numeric" placeholder="0000 0000 0000" maxlength="14" data-mascara="titulo"') }}
       {{ campo('renda_familiar_total', 'Renda familiar total (R$)', valor(a.renda_familiar_total), extra='inputmode="decimal"') }}
     </div>
   </fieldset>
@@ -82,8 +82,8 @@
   <fieldset>
     <legend>Contato</legend>
     <div class="campos">
-      {{ campo('celular', 'Celular (WhatsApp)', a.celular, 'tel') }}
-      {{ campo('tel_residencial', 'Telefone residencial', a.tel_residencial, 'tel') }}
+      {{ campo('celular', 'Celular (WhatsApp)', a.celular, 'tel', extra='placeholder="(11) 90000-0000" maxlength="15" data-mascara="celular"') }}
+      {{ campo('tel_residencial', 'Telefone residencial', a.tel_residencial, 'tel', extra='placeholder="(11) 0000-0000" maxlength="15" data-mascara="telefone"') }}
       {{ campo('recado', 'Recado (falar com)', a.recado) }}
       {{ campo('email', 'E-mail', a.email, 'email') }}
     </div>
@@ -92,12 +92,16 @@
   <fieldset>
     <legend>Endereço e moradia</legend>
     <div class="campos">
+      <div class="campo">
+        <label for="cep">CEP</label>
+        <input id="cep" name="cep" type="text" value="{{ a.cep or '' }}" inputmode="numeric" placeholder="00000-000" maxlength="9" autocomplete="postal-code" data-mascara="cep" data-buscar-endereco>
+        <span class="ajuda" id="cep-aviso" aria-live="polite">Digite o CEP: rua, bairro, cidade e estado são preenchidos sozinhos.</span>
+      </div>
       {{ campo('rua', 'Rua / Av.', a.rua, classe='largo') }}
       {{ campo('numero', 'Nº', a.numero) }}
       {{ campo('bairro', 'Bairro', a.bairro) }}
       {{ campo('cidade', 'Cidade', a.cidade) }}
       {{ campo('uf', 'Estado', a.uf, extra='maxlength="2"') }}
-      {{ campo('cep', 'CEP', a.cep, extra='inputmode="numeric"') }}
       <div class="campo">
         <label for="tipo_residencia">Tipo de residência</label>
         <select id="tipo_residencia" name="tipo_residencia">
