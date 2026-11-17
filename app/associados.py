@@ -23,12 +23,14 @@ from .utils import cpf_valido, ler_data, ler_valor, somente_digitos
 bp = Blueprint("associados", __name__, url_prefix="/associados")
 
 # campo do formulário -> tipo de conversão
+# Tirados do cadastro a pedido da associação (17/11/2026): data de emissão do RG, grau de
+# instrução, empresa, CNPJ, data de admissão, CTPS e série. As colunas continuam no banco,
+# então o que já foi cadastrado não se perde.
 CAMPOS = {
     "nome": "texto", "cpf": "cpf", "rg": "texto", "orgao_emissor": "texto", "uf_rg": "uf",
-    "data_emissao_rg": "data", "data_nascimento": "data", "nacionalidade": "texto",
+    "data_nascimento": "data", "nacionalidade": "texto",
     "naturalidade": "texto", "nome_pai": "texto", "nome_mae": "texto", "estado_civil": "texto",
-    "grau_instrucao": "texto", "profissao": "texto", "renda": "valor", "empresa": "texto",
-    "cnpj": "digitos", "data_admissao": "data", "ctps": "texto", "serie_ctps": "texto",
+    "profissao": "texto", "renda": "valor",
     "titulo_eleitor": "texto", "celular": "texto", "tel_residencial": "texto", "recado": "texto",
     "email": "texto", "rua": "texto", "numero": "texto", "bairro": "texto", "cidade": "texto",
     "uf": "uf", "cep": "digitos", "tipo_residencia": "texto", "valor_aluguel": "valor",

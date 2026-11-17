@@ -48,7 +48,6 @@
       {{ campo('rg', 'RG', a.rg, extra='placeholder="00.000.000-0" data-mascara="rg"') }}
       {{ campo('orgao_emissor', 'Órgão emissor', a.orgao_emissor) }}
       {{ campo('uf_rg', 'UF do RG', a.uf_rg, extra='maxlength="2"') }}
-      {{ campo('data_emissao_rg', 'Data de emissão do RG', data(a.data_emissao_rg), 'date') }}
       {{ campo('nacionalidade', 'Nacionalidade', a.nacionalidade) }}
       {{ campo('naturalidade', 'Naturalidade', a.naturalidade) }}
       {{ campo('nome_pai', 'Nome do pai', a.nome_pai) }}
@@ -60,7 +59,6 @@
           {% for e in estados_civis %}<option value="{{ e }}" {{ 'selected' if a.estado_civil == e }}>{{ e|capitalize }}</option>{% endfor %}
         </select>
       </div>
-      {{ campo('grau_instrucao', 'Grau de instrução', a.grau_instrucao) }}
     </div>
   </fieldset>
 
@@ -69,11 +67,6 @@
     <div class="campos">
       {{ campo('profissao', 'Profissão', a.profissao) }}
       {{ campo('renda', 'Renda (R$)', valor(a.renda), extra='inputmode="decimal"') }}
-      {{ campo('empresa', 'Empresa', a.empresa) }}
-      {{ campo('cnpj', 'CNPJ', a.cnpj, extra='inputmode="numeric" placeholder="00.000.000/0000-00" maxlength="18" data-mascara="cnpj"') }}
-      {{ campo('data_admissao', 'Data de admissão', data(a.data_admissao), 'date') }}
-      {{ campo('ctps', 'CTPS nº', a.ctps) }}
-      {{ campo('serie_ctps', 'Série', a.serie_ctps) }}
       {{ campo('titulo_eleitor', 'Título de eleitor', a.titulo_eleitor, extra='inputmode="numeric" placeholder="0000 0000 0000" maxlength="14" data-mascara="titulo"') }}
       {{ campo('renda_familiar_total', 'Renda familiar total (R$)', valor(a.renda_familiar_total), extra='inputmode="decimal"') }}
     </div>
