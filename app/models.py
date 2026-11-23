@@ -18,7 +18,7 @@ TIPOS_DOCUMENTO = (
 )
 ESTADOS_CIVIS = ("casado", "solteiro", "divorciado", "viúvo", "separado", "outro")
 TIPOS_RESIDENCIA = ("alugada", "própria", "cedida", "mora com os pais", "área da prefeitura", "outra")
-STATUS_MENSALIDADE = ("aberta", "em_analise", "paga", "recusada", "isenta")
+STATUS_MENSALIDADE = ("aberta", "em_analise", "paga", "recusada", "isenta", "pendente")
 VALOR_MENSALIDADE = 50.0
 MESES = ("jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez")
 

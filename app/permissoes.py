@@ -21,7 +21,7 @@ CONFERENCIA = {
     "acessos.lista", "acessos.gerar_em_lote",
     "importacao.inicio", "importacao.previa", "importacao.confirmar", "importacao.cancelar", "importacao.modelo",
     "mensalidades.validar", "mensalidades.recusar", "mensalidades.cobranca_mutirantes",
-    "assembleias.encerrar", "assembleias.reabrir",
+    "assembleias.encerrar", "assembleias.reabrir", "assembleias.excluir",
 }
 # Ações só do presidente
 PRESIDENTE = {

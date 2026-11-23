@@ -27,7 +27,7 @@ def inicio():
             db.select(Mensalidade.status, func.count()).filter_by(competencia=competencia).group_by(Mensalidade.status)
         ).all()
     )
-    cobradas = sum(v for k, v in por_status.items() if k != "isenta")
+    cobradas = sum(v for k, v in por_status.items() if k not in ("isenta", "pendente"))
     pagas = por_status.get("paga", 0)
     em_analise = db.session.execute(
         db.select(func.count()).select_from(Mensalidade).filter_by(status="em_analise")

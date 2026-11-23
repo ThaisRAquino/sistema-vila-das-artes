@@ -76,6 +76,18 @@
   </div>
 </div>
 
+{% if pode('assembleias.excluir') %}
+<details class="painel" style="margin-top: 16px">
+  <summary style="cursor: pointer; font-weight: 700; color: var(--risco-texto)">Excluir esta lista de presença</summary>
+  <form method="post" action="{{ url_for('assembleias.excluir', assembleia_id=assembleia.id) }}" style="display: flex; flex-direction: column; gap: 10px; margin-top: 10px">
+    <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+    <p style="margin: 0; font-size: 14px">Use só para uma lista aberta por engano ou com a data errada. Apaga a assembleia de {{ assembleia.data|data }} e as {{ total }} presença(s) marcadas. <b>Não dá para desfazer.</b></p>
+    <label style="display: flex; gap: 8px; align-items: center; font-size: 14px"><input type="checkbox" name="confirmar" value="1" required> Entendi, quero excluir esta lista</label>
+    <div><button class="btn btn-perigo" type="submit">Excluir lista de presença</button></div>
+  </form>
+</details>
+{% endif %}
+
 {% if not assembleia.encerrada %}
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <script>

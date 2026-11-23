@@ -167,6 +167,15 @@ def _atualizar_banco():
     inspetor = inspect(db.engine)
     tabelas = set(inspetor.get_table_names())
     with db.engine.begin() as conexao:
+        if "mensalidades" in tabelas:  # antes do início da cobrança, mensalidade em aberto vira "pendente"
+            from .regras import CHAVE_INICIO_COBRANCA, INICIO_COBRANCA_PADRAO
+            inicio = INICIO_COBRANCA_PADRAO
+            if "configuracoes" in tabelas:
+                linha = conexao.execute(text("SELECT valor FROM configuracoes WHERE chave = :c"),
+                                        {"c": CHAVE_INICIO_COBRANCA}).first()
+                inicio = (linha[0] if linha and linha[0] else inicio)
+            conexao.execute(text("UPDATE mensalidades SET status = 'pendente' "
+                                 "WHERE status IN ('aberta', 'recusada') AND competencia < :i"), {"i": inicio})
         if "usuarios" in tabelas:  # perfil antigo "equipe" virou "administracao"
             conexao.execute(text("UPDATE usuarios SET perfil = 'administracao' WHERE perfil = 'equipe'"))
         for tabela in db.metadata.sorted_tables:

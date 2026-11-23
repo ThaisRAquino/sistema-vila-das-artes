@@ -14,6 +14,10 @@
   {% for m in meses_menu %}<a href="{{ url_for('mensalidades.mes', mes=m) }}" class="{{ 'ativo' if m == competencia }}">{{ m[5:] }}/{{ m[2:4] }}</a>{% endfor %}
 </nav>
 
+{% if not cobranca_comecou %}
+<div class="mensagem aviso" role="status"><b>A cobrança começa em {{ inicio_cobranca }}.</b> Neste mês as mensalidades aparecem como <b>Pendente</b>: não contam como atraso nem como valor esperado. Quem quiser já pode pagar, e o pagamento é registrado normalmente.</div>
+{% endif %}
+
 <div class="cards">
   <div class="card"><div class="rotulo">Esperado ({{ cobrados }} cobrados)</div><div class="numero">{{ (cobrados * 50)|moeda }}</div></div>
   <div class="card ok"><div class="rotulo">Pagas e validadas · {{ contagem.get('paga', 0) }}</div><div class="numero">{{ (contagem.get('paga', 0) * 50)|moeda }}</div></div>
@@ -72,7 +76,7 @@
 </section>
 
 <div class="filtros">
-  {% for chave, rotulo in [('todas','Todas'), ('aberta','Sem comprovante'), ('em_analise','Em análise'), ('paga','Pagas'), ('recusada','Recusadas'), ('isenta','Isentas')] %}
+  {% for chave, rotulo in [('todas','Todas'), ('aberta','Sem comprovante'), ('em_analise','Em análise'), ('paga','Pagas'), ('recusada','Recusadas'), ('isenta','Isentas'), ('pendente','Pendentes')] %}
     <a class="pilula {{ 'ativa' if filtro == chave }}" href="{{ url_for('mensalidades.mes', mes=competencia, filtro=chave) }}">{{ rotulo }}{% if chave != 'todas' %} · {{ contagem.get(chave, 0) }}{% endif %}</a>
   {% endfor %}
 </div>
@@ -88,10 +92,10 @@
           {% if m.status == 'recusada' %}<div class="sub" style="margin:0; color: var(--risco-texto)">Recusado: {{ m.motivo_recusa }}</div>{% endif %}</td>
         <td>{{ etiqueta_mensalidade(m) }}</td>
         <td>
-          {% if m.status in ('aberta', 'recusada') %}
+          {% if m.status in ('aberta', 'recusada', 'pendente') %}
           <div class="linha-acoes">
           <a class="btn btn-pequeno btn-primario" href="{{ url_for('mensalidades.receber', codigo=m.associado.numero_socio) }}">Receber</a>
-          {{ whatsapp(m.associado, 'mensalidade', 'Cobrar no WhatsApp') }}
+          {% if m.status != 'pendente' %}{{ whatsapp(m.associado, 'mensalidade', 'Cobrar no WhatsApp') }}{% endif %}
           </div>
           {% elif m.status == 'paga' %}
           <a class="btn btn-pequeno" href="{{ url_for('mensalidades.recibo', mensalidade_id=m.id) }}" target="_blank">Recibo nº {{ m.numero_recibo }}</a>

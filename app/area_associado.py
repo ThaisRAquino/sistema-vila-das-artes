@@ -20,7 +20,7 @@ from flask import (
 
 from . import db, termo
 from .models import Assembleia, Associado, Mensalidade
-from .regras import competencia_atual, garantir_mensalidades, proxima_assembleia, situacao
+from .regras import competencia_atual, garantir_mensalidades, inicio_cobranca_extenso, proxima_assembleia, situacao
 from .seguranca import bloqueado, limpar, registrar_falha
 from .utils import cpf_valido, somente_digitos
 
@@ -220,6 +220,7 @@ def inicio(associado):
         proxima=proxima_assembleia(),
         assembleias=assembleias,
         presentes={p.assembleia_id for p in associado.presencas},
+        inicio_cobranca=inicio_cobranca_extenso(),
     )
 
 
@@ -277,7 +278,7 @@ def enviar_comprovante(associado, mensalidade_id):
     m = db.session.get(Mensalidade, mensalidade_id)
     if not m or m.associado_id != associado.id:
         abort(404)
-    if m.status not in ("aberta", "recusada"):
+    if m.status not in ("aberta", "recusada", "pendente"):
         flash("Esta mensalidade não está aguardando comprovante.", "aviso")
         return redirect(url_for("area.inicio"))
     nome, erro = salvar_comprovante(request.files.get("comprovante"))

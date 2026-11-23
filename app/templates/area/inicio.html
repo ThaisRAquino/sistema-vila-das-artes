@@ -40,7 +40,7 @@
     <div style="flex-wrap: wrap">
       <span>{{ m.mes_ano }}{% if m.status == 'recusada' %}<br><span class="sub" style="margin:0; color: var(--risco-texto)">Recusado: {{ m.motivo_recusa }}</span>{% endif %}</span>
       {{ etiqueta_mensalidade(m) }}
-      {% if m.status in ('aberta', 'recusada') %}
+      {% if m.status in ('aberta', 'recusada', 'pendente') %}
       <form method="post" enctype="multipart/form-data" action="{{ url_for('area.enviar_comprovante', mensalidade_id=m.id) }}" style="width: 100%; display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px">
         <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
         <input type="file" name="comprovante" data-reduzir accept="image/*,application/pdf" aria-label="Foto do comprovante de {{ m.mes_ano }}" required style="flex: 1 1 180px; font-size: 13px">
@@ -52,6 +52,7 @@
     <div><span class="sub" style="margin:0">Nenhuma mensalidade ainda.</span></div>
     {% endfor %}
   </div>
+  {% if a.mensalidades|selectattr("status", "equalto", "pendente")|list %}<p class="nota" style="margin: 10px 0 0"><b>A cobrança começa em {{ inicio_cobranca }}.</b> Até lá, as mensalidades aparecem como Pendente e não contam como atraso.</p>{% endif %}
   <p class="nota" style="margin: 10px 0 0">A mensalidade só aparece como paga depois que a equipe confere o comprovante.</p>
 </section>
 

@@ -145,6 +145,21 @@ def reabrir(assembleia_id):
     return redirect(url_for("assembleias.presenca", assembleia_id=assembleia.id))
 
 
+@bp.route("/<int:assembleia_id>/excluir", methods=["POST"])
+@login_required
+def excluir(assembleia_id):
+    """Apaga a lista de presença inteira (ex.: aberta por engano ou com a data errada)."""
+    assembleia = buscar(assembleia_id)
+    if request.form.get("confirmar") != "1":
+        flash("Marque a confirmação para excluir a lista de presença.", "erro")
+        return redirect(url_for("assembleias.presenca", assembleia_id=assembleia.id))
+    data, total = assembleia.data, len(assembleia.presencas)
+    db.session.delete(assembleia)  # as presenças vão junto
+    db.session.commit()
+    flash(f"Lista de presença de {data.strftime('%d/%m/%Y')} excluída ({total} presença(s) apagada(s)).", "aviso")
+    return redirect(url_for("assembleias.lista"))
+
+
 @bp.route("/<int:assembleia_id>/presencas/<int:presenca_id>/remover", methods=["POST"])
 @login_required
 def remover_presenca(assembleia_id, presenca_id):

@@ -22,5 +22,6 @@
   {% elif m.status == 'em_analise' %}<span class="etiqueta info">◔ Em análise</span>
   {% elif m.status == 'recusada' %}<span class="etiqueta risco">✕ Recusada</span>
   {% elif m.status == 'isenta' %}<span class="etiqueta info">◆ Isenta</span>
+  {% elif m.status == 'pendente' %}<span class="etiqueta info" title="A cobrança ainda não começou">○ Pendente</span>
   {% else %}<span class="etiqueta pendente">◐ Sem comprovante</span>{% endif %}
 {% endmacro %}

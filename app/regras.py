@@ -19,6 +19,12 @@ from .utils import somente_digitos
 LIMITE_FALTAS = 3
 LIMITE_MENSALIDADES = 3
 CHAVE_COBRANCA_MUTIRANTES = "cobranca_mutirantes_desde"
+# A associação começou a usar o sistema em nov/2026 e pediu para a cobrança valer só a partir
+# da reunião de dezembro. Antes disso, a mensalidade fica "pendente" e não conta como atraso.
+CHAVE_INICIO_COBRANCA = "cobranca_desde"
+INICIO_COBRANCA_PADRAO = "2026-12"
+MESES_EXTENSO = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto",
+                 "setembro", "outubro", "novembro", "dezembro"]
 
 
 # ---------- datas ----------
@@ -60,6 +66,20 @@ def cobranca_mutirantes_desde():
     return Configuracao.obter(CHAVE_COBRANCA_MUTIRANTES)
 
 
+def inicio_cobranca():
+    """Primeiro mês (AAAA-MM) em que a mensalidade passa a ser cobrada de todos."""
+    return Configuracao.obter(CHAVE_INICIO_COBRANCA, INICIO_COBRANCA_PADRAO)
+
+
+def inicio_cobranca_extenso():
+    ano, mes = inicio_cobranca().split("-")
+    return f"{MESES_EXTENSO[int(mes) - 1]} de {ano}"
+
+
+def cobranca_comecou(competencia):
+    return competencia >= inicio_cobranca()
+
+
 def isento_no_mes(associado, competencia):
     """Mutirante é isento até a cobrança ser ativada (novo projeto do CDHU)."""
     if not associado.mutirante:
@@ -82,7 +102,12 @@ def garantir_mensalidades(competencia):
         inscricao = associado.data_inscricao or associado.criado_em.date()
         if competencia < competencia_de(inscricao):
             continue
-        status = "isenta" if isento_no_mes(associado, competencia) else "aberta"
+        if isento_no_mes(associado, competencia):
+            status = "isenta"
+        elif not cobranca_comecou(competencia):
+            status = "pendente"
+        else:
+            status = "aberta"
         db.session.add(
             Mensalidade(associado=associado, competencia=competencia, valor=VALOR_MENSALIDADE, status=status)
         )
@@ -115,7 +140,7 @@ def mensalidades_em_aberto_seguidas(associado, ate=None):
     """
     ate = ate or competencia_anterior(competencia_atual())
     por_mes = {m.competencia: m.status for m in associado.mensalidades}
-    desde = competencia_de(inicio_da_contagem(associado))
+    desde = max(competencia_de(inicio_da_contagem(associado)), inicio_cobranca())  # antes da cobrança não conta
     contagem, mes = 0, ate
     while mes >= desde and por_mes.get(mes) in ("aberta", "recusada"):
         contagem += 1

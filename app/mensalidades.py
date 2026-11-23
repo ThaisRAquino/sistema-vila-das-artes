@@ -22,7 +22,9 @@ from .models import Associado, Configuracao, Mensalidade
 from .regras import (
     CHAVE_COBRANCA_MUTIRANTES,
     competencia_atual,
+    cobranca_comecou,
     garantir_mensalidades,
+    inicio_cobranca_extenso,
     proximo_recibo,
 )
 
@@ -92,7 +94,7 @@ def mes():
 
     filtro = request.args.get("filtro", "todas")
     base = db.select(Mensalidade).join(Associado).filter(Mensalidade.competencia == competencia)
-    if filtro in ("aberta", "em_analise", "paga", "recusada", "isenta"):
+    if filtro in ("aberta", "em_analise", "paga", "recusada", "isenta", "pendente"):
         base = base.filter(Mensalidade.status == filtro)
     lista = db.session.execute(base.order_by(Associado.numero_socio)).scalars().all()
 
@@ -115,7 +117,7 @@ def mes():
         total = ano * 12 + (m - 1) + i
         meses_menu.append(f"{total // 12:04d}-{total % 12 + 1:02d}")
 
-    cobrados = sum(v for k, v in contagem.items() if k != "isenta")
+    cobrados = sum(v for k, v in contagem.items() if k not in ("isenta", "pendente"))
     return render_template(
         "mensalidades/mes.html",
         competencia=competencia,
@@ -127,6 +129,8 @@ def mes():
         meses_menu=meses_menu,
         motivos_recusa=MOTIVOS_RECUSA,
         cobranca_desde=Configuracao.obter(CHAVE_COBRANCA_MUTIRANTES),
+        cobranca_comecou=cobranca_comecou(competencia),
+        inicio_cobranca=inicio_cobranca_extenso(),
     )
 
 
@@ -178,7 +182,7 @@ def receber():
         else:
             garantir_mensalidades(competencia_atual())
             mensalidades = sorted(
-                (m for m in associado.mensalidades if m.status in ("aberta", "recusada", "em_analise")),
+                (m for m in associado.mensalidades if m.status in ("aberta", "recusada", "em_analise", "pendente")),
                 key=lambda m: m.competencia,
             )
     return render_template("mensalidades/receber.html", codigo=codigo, a=associado, mensalidades=mensalidades,
@@ -239,7 +243,7 @@ def recusar(mensalidade_id):
     elif not motivo:
         flash("Escolha o motivo da recusa.", "erro")
     else:
-        m.status = "recusada"
+        m.status = "recusada" if cobranca_comecou(m.competencia) else "pendente"
         m.motivo_recusa = motivo[:200]
         m.validado_por_id = current_user.id
         m.validado_em = datetime.now()
