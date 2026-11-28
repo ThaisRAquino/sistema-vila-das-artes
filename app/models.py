@@ -262,8 +262,11 @@ class Documento(Carimbo, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     associado_id = db.Column(db.Integer, db.ForeignKey("associados.id"), nullable=False)
     tipo = db.Column(db.String(40), nullable=False)
-    status = db.Column(db.String(20), nullable=False, default="pendente")  # entregue | pendente
-    arquivo = db.Column(db.String(255))
+    status = db.Column(db.String(20), nullable=False, default="pendente")  # pendente | em_analise | entregue
+    arquivo = db.Column(db.String(255))  # foto ou PDF enviado pelo associado ou pela equipe
+    enviado_em = db.Column(db.DateTime)
+    enviado_pelo_associado = db.Column(db.Boolean, default=False)
+    motivo_recusa = db.Column(db.String(200))
     validade = db.Column(db.Date)
     conferido_por_id = db.Column(db.Integer, db.ForeignKey("usuarios.id"))
     conferido_por = db.relationship("Usuario")

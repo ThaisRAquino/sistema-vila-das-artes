@@ -126,9 +126,9 @@ def consulta_lista(termo, filtro):
     if filtro in CATEGORIAS:
         consulta = consulta.filter_by(categoria=filtro)
     elif filtro == "pendentes":
-        consulta = consulta.filter(Associado.documentos.any(Documento.status == "pendente"))
+        consulta = consulta.filter(Associado.documentos.any(Documento.status != "entregue"))
     elif filtro == "completos":
-        consulta = consulta.filter(~Associado.documentos.any(Documento.status == "pendente"))
+        consulta = consulta.filter(~Associado.documentos.any(Documento.status != "entregue"))
     return consulta.order_by(Associado.numero_socio)
 
 
@@ -149,7 +149,7 @@ def lista():
     pendentes = db.session.execute(
         db.select(func.count(func.distinct(Documento.associado_id)))
         .join(Associado)
-        .filter(Documento.status == "pendente", Associado.situacao == "ativo")
+        .filter(Documento.status != "entregue", Associado.situacao == "ativo")
     ).scalar()
     desligados = db.session.execute(
         db.select(func.count()).select_from(Associado).filter_by(situacao="desligado")
@@ -200,7 +200,7 @@ def exportar():
     for a in associados:
         s = situacao_de(a) if a.situacao == "ativo" else None
         endereco = ", ".join(p for p in [a.rua, a.numero] if p)
-        pendentes = [d.tipo for d in a.documentos if d.status == "pendente"]
+        pendentes = [d.tipo for d in a.documentos if d.status != "entregue"]
         aba.append([
             a.numero_socio, a.nome, formatar_cpf(a.cpf), a.rg or "",
             a.data_nascimento.strftime("%d/%m/%Y") if a.data_nascimento else "",
@@ -419,6 +419,9 @@ def marcar_documento(associado_id, documento_id):
     if not documento or documento.associado_id != associado_id:
         abort(404)
     if documento.status == "entregue":
+        from .documentos import apagar_arquivo
+
+        apagar_arquivo(documento)
         documento.status = "pendente"
         documento.conferido_por_id = None
         documento.conferido_em = None
@@ -426,6 +429,68 @@ def marcar_documento(associado_id, documento_id):
         documento.status = "entregue"
         documento.conferido_por_id = current_user.id
         documento.conferido_em = datetime.now()
+    db.session.commit()
+    return redirect(url_for("associados.ficha", associado_id=associado_id) + "#documentos")
+
+
+@bp.route("/<int:associado_id>/documentos/<int:documento_id>/enviar", methods=["POST"])
+@login_required
+def enviar_documento(associado_id, documento_id):
+    """A equipe anexa a foto ou o PDF do documento. Quem faz a conferência já deixa como entregue."""
+    from .documentos import salvar_documento
+    from .permissoes import pode
+
+    documento = db.session.get(Documento, documento_id)
+    if not documento or documento.associado_id != associado_id:
+        abort(404)
+    erro = salvar_documento(documento, request.files.get("arquivo"), pelo_associado=False)
+    if erro:
+        flash(erro, "erro")
+    else:
+        if pode("conferencia"):
+            documento.status = "entregue"
+            documento.conferido_por_id = current_user.id
+            documento.conferido_em = datetime.now()
+            flash(f"{documento.tipo} anexado e marcado como entregue.", "ok")
+        else:
+            flash(f"{documento.tipo} anexado. A administração vai conferir.", "ok")
+        db.session.commit()
+    return redirect(url_for("associados.ficha", associado_id=associado_id) + "#documentos")
+
+
+@bp.route("/<int:associado_id>/documentos/<int:documento_id>/arquivo")
+@login_required
+def ver_documento(associado_id, documento_id):
+    from flask import send_from_directory
+
+    from .documentos import pasta_documentos
+
+    documento = db.session.get(Documento, documento_id)
+    if not documento or documento.associado_id != associado_id or not documento.arquivo:
+        abort(404)
+    return send_from_directory(pasta_documentos(), documento.arquivo)
+
+
+@bp.route("/<int:associado_id>/documentos/<int:documento_id>/conferir", methods=["POST"])
+@login_required
+def conferir_documento(associado_id, documento_id):
+    """Aprova ou recusa o documento enviado (pelo associado ou por um voluntário)."""
+    from .documentos import apagar_arquivo
+
+    documento = db.session.get(Documento, documento_id)
+    if not documento or documento.associado_id != associado_id or documento.status != "em_analise":
+        abort(404)
+    if request.form.get("acao") == "aprovar":
+        documento.status = "entregue"
+        documento.conferido_por_id = current_user.id
+        documento.conferido_em = datetime.now()
+        flash(f"{documento.tipo} conferido e marcado como entregue.", "ok")
+    else:
+        motivo = request.form.get("motivo", "").strip() or "Documento ilegível ou incorreto"
+        apagar_arquivo(documento)
+        documento.status = "pendente"
+        documento.motivo_recusa = motivo[:200]
+        flash(f"{documento.tipo} recusado: {motivo}. Avise o associado para enviar de novo.", "aviso")
     db.session.commit()
     return redirect(url_for("associados.ficha", associado_id=associado_id) + "#documentos")
 

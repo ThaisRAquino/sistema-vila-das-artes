@@ -18,6 +18,7 @@ CONFERENCIA = {
     "associados.exportar", "associados.novo", "associados.editar", "associados.alterar_numero",
     "associados.alterar_categoria", "associados.marcar_documento", "associados.adicionar_familiar",
     "associados.remover_familiar", "associados.renovar_qr", "associados.gerar_acesso", "associados.remover_foto",
+    "associados.ver_documento", "associados.conferir_documento",
     "acessos.lista", "acessos.gerar_em_lote",
     "importacao.inicio", "importacao.previa", "importacao.confirmar", "importacao.cancelar", "importacao.modelo",
     "mensalidades.validar", "mensalidades.recusar", "mensalidades.cobranca_mutirantes",

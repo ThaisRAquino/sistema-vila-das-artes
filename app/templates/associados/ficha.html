@@ -126,24 +126,49 @@
     <h2>Documentos · {{ a.docs_entregues }} de {{ a.docs_total }}</h2>
     <div class="lista-linhas">
       {% for d in a.documentos %}
-      <div>
-        <span>{{ d.tipo }}{% if d.conferido_em %}<br><span class="sub" style="margin:0">conferido por {{ d.conferido_por.nome if d.conferido_por else '' }} em {{ d.conferido_em|data }}</span>{% endif %}</span>
-        {% if not pode('conferencia') %}
-          {% if d.status == 'entregue' %}<span class="etiqueta ok">● Entregue</span>{% else %}<span class="etiqueta pendente">◐ Pendente</span>{% endif %}
-        {% else %}
-        <form method="post" action="{{ url_for('associados.marcar_documento', associado_id=a.id, documento_id=d.id) }}">
-          <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
-          {% if d.status == 'entregue' %}
-            <button class="etiqueta ok" style="border: 0; cursor: pointer" type="submit" title="Marcar como pendente">● Entregue</button>
+      <div style="flex-wrap: wrap">
+        <span>{{ d.tipo }}
+          {% if d.status == 'entregue' and d.conferido_em %}<br><span class="sub" style="margin:0">conferido por {{ d.conferido_por.nome if d.conferido_por else '' }} em {{ d.conferido_em|data }}</span>{% endif %}
+          {% if d.status == 'em_analise' %}<br><span class="sub" style="margin:0">enviado {{ 'pelo associado' if d.enviado_pelo_associado else 'pela equipe' }} em {{ d.enviado_em|data }}</span>{% endif %}
+          {% if d.status == 'pendente' and d.motivo_recusa %}<br><span class="sub" style="margin:0; color: var(--risco-texto)">Recusado: {{ d.motivo_recusa }}</span>{% endif %}
+        </span>
+        <span class="linha-acoes" style="gap: 8px; align-items: center">
+          {% if d.arquivo and pode('associados.ver_documento') %}<a class="btn btn-pequeno" href="{{ url_for('associados.ver_documento', associado_id=a.id, documento_id=d.id) }}" target="_blank" rel="noopener">Ver arquivo</a>{% endif %}
+          {% if d.status == 'em_analise' %}
+            {% if pode('associados.conferir_documento') %}
+            <form method="post" action="{{ url_for('associados.conferir_documento', associado_id=a.id, documento_id=d.id) }}" class="linha-acoes" style="gap: 6px">
+              <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+              <button class="btn btn-pequeno btn-primario" type="submit" name="acao" value="aprovar">Aprovar</button>
+              <select name="motivo" aria-label="Motivo da recusa de {{ d.tipo }}" style="height: 36px; border: 1px solid #BAC6E4; border-radius: 8px; font: inherit; font-size: 13px">
+                <option>Documento ilegível ou cortado</option><option>Documento errado</option><option>Documento vencido</option>
+              </select>
+              <button class="btn btn-pequeno btn-perigo" type="submit" name="acao" value="recusar">Recusar</button>
+            </form>
+            {% else %}<span class="etiqueta info">◔ Em análise</span>{% endif %}
+          {% elif not pode('conferencia') %}
+            {% if d.status == 'entregue' %}<span class="etiqueta ok">● Entregue</span>{% else %}<span class="etiqueta pendente">◐ Pendente</span>{% endif %}
           {% else %}
-            <button class="etiqueta pendente" style="border: 0; cursor: pointer" type="submit" title="Marcar como entregue">◐ Pendente</button>
+          <form method="post" action="{{ url_for('associados.marcar_documento', associado_id=a.id, documento_id=d.id) }}">
+            <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+            {% if d.status == 'entregue' %}
+              <button class="etiqueta ok" style="border: 0; cursor: pointer" type="submit" title="Marcar como pendente">● Entregue</button>
+            {% else %}
+              <button class="etiqueta pendente" style="border: 0; cursor: pointer" type="submit" title="Marcar como entregue">◐ Pendente</button>
+            {% endif %}
+          </form>
           {% endif %}
+        </span>
+        {% if d.status == 'pendente' %}
+        <form method="post" enctype="multipart/form-data" action="{{ url_for('associados.enviar_documento', associado_id=a.id, documento_id=d.id) }}" style="width: 100%; display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px">
+          <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+          <input type="file" name="arquivo" data-reduzir accept="image/*,application/pdf" aria-label="Foto ou PDF de {{ d.tipo }}" required style="flex: 1 1 180px; font-size: 13px">
+          <button class="btn btn-pequeno" type="submit">Anexar</button>
         </form>
         {% endif %}
       </div>
       {% endfor %}
     </div>
-    <p class="nota" style="margin-top: 12px">Clique na etiqueta para marcar como entregue ou pendente. O sistema guarda quem conferiu.</p>
+    <p class="nota" style="margin-top: 12px">Anexe a foto ou o PDF do documento, ou clique na etiqueta para marcar como entregue sem arquivo. Documentos enviados pelo associado no app aparecem aqui para aprovar ou recusar.</p>
   </section>
 
   <section class="painel">

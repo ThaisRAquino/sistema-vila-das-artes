@@ -124,3 +124,83 @@ def test_voluntario_nao_exclui_lista(app):
     assert c.post(f"/assembleias/{aid}/excluir", data={"confirmar": "1"}).status_code == 403
     with app.app_context():
         assert db.session.get(Assembleia, aid)
+
+
+# ---------- documentos enviados pelo associado e pela equipe (28/11) ----------
+
+def foto():
+    import io
+    from PIL import Image
+    b = io.BytesIO()
+    Image.new("RGB", (900, 600), (200, 200, 200)).save(b, "JPEG")
+    b.seek(0)
+    return b
+
+
+def associado_logado(app):
+    from datetime import datetime
+    from app import termo
+    with app.app_context():
+        a = db.session.execute(db.select(Associado).filter_by(cpf="52998224725")).scalar_one()
+        a.definir_senha("minhasenha")
+        a.termo_aceito_em, a.termo_versao = datetime.now(), termo.VERSAO
+        db.session.commit()
+    c = app.test_client()
+    c.post("/associado/entrar", data={"cpf": "52998224725", "senha": "minhasenha"})
+    return c
+
+
+def doc(app, tipo="RG"):
+    from app.models import Documento
+    with app.app_context():
+        return db.session.execute(db.select(Documento).filter_by(tipo=tipo)).scalar_one()
+
+
+def test_associado_envia_documento_e_administracao_aprova(app):
+    import os
+    c = associado_logado(app)
+    assert "Meus documentos" in c.get("/associado/").get_data(as_text=True)
+    d = doc(app)
+    c.post(f"/associado/documentos/{d.id}", data={"arquivo": (foto(), "rg.jpg")}, content_type="multipart/form-data")
+    d = doc(app)
+    assert d.status == "em_analise" and d.arquivo and d.enviado_pelo_associado
+    assert os.path.exists(os.path.join(app.instance_path, "documentos", d.arquivo))
+    adm = entrar(app, "adm")
+    assert "Documentos enviados para conferir (1)" in adm.get("/").get_data(as_text=True)
+    assert adm.get(f"/associados/1/documentos/{d.id}/arquivo").status_code == 200
+    adm.post(f"/associados/1/documentos/{d.id}/conferir", data={"acao": "aprovar"})
+    assert doc(app).status == "entregue"
+
+
+def test_documento_recusado_volta_a_faltar_com_motivo(app):
+    c = associado_logado(app)
+    d = doc(app, "CPF")
+    c.post(f"/associado/documentos/{d.id}", data={"arquivo": (foto(), "cpf.jpg")}, content_type="multipart/form-data")
+    entrar(app, "adm").post(f"/associados/1/documentos/{d.id}/conferir", data={"acao": "recusar", "motivo": "Documento ilegível ou cortado"})
+    d = doc(app, "CPF")
+    assert d.status == "pendente" and d.arquivo is None and d.motivo_recusa == "Documento ilegível ou cortado"
+    assert "Recusado: Documento ilegível ou cortado" in c.get("/associado/").get_data(as_text=True)
+
+
+def test_equipe_anexa_documento(app):
+    vol = entrar(app, "vol")
+    d = doc(app, "Comprovante de endereço")
+    vol.post(f"/associados/1/documentos/{d.id}/enviar", data={"arquivo": (foto(), "conta.jpg")}, content_type="multipart/form-data")
+    assert doc(app, "Comprovante de endereço").status == "em_analise"   # voluntário: a administração confere
+    assert vol.get(f"/associados/1/documentos/{d.id}/arquivo").status_code == 403  # voluntário não abre o documento
+    d2 = doc(app, "Título de eleitor")
+    entrar(app, "adm").post(f"/associados/1/documentos/{d2.id}/enviar", data={"arquivo": (foto(), "t.jpg")}, content_type="multipart/form-data")
+    assert doc(app, "Título de eleitor").status == "entregue"  # administração: já fica entregue
+
+
+def test_associado_nao_envia_documento_de_outro(app):
+    from app.models import Documento
+    with app.app_context():
+        b = Associado(numero_socio="0002", nome="Bia", cpf="39053344705", data_inscricao=date(2019, 1, 1))
+        b.criar_checklist()
+        db.session.add(b)
+        db.session.commit()
+        outro = db.session.execute(db.select(Documento).filter_by(associado_id=b.id, tipo="RG")).scalar_one().id
+    c = associado_logado(app)
+    r = c.post(f"/associado/documentos/{outro}", data={"arquivo": (foto(), "x.jpg")}, content_type="multipart/form-data")
+    assert r.status_code == 404

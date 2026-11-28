@@ -36,8 +36,14 @@ def inicio():
     docs_pendentes = db.session.execute(
         db.select(func.count(func.distinct(Documento.associado_id)))
         .join(Associado)
-        .filter(Documento.status == "pendente", Associado.situacao == "ativo")
+        .filter(Documento.status != "entregue", Associado.situacao == "ativo")
     ).scalar()
+
+    docs_para_conferir = db.session.execute(
+        db.select(Documento).join(Associado)
+        .filter(Documento.status == "em_analise", Associado.situacao == "ativo")
+        .order_by(Documento.enviado_em)
+    ).scalars().all()
 
     risco, atencao = associados_em_alerta()
 
@@ -55,6 +61,7 @@ def inicio():
 
     return render_template(
         "painel.html",
+        docs_para_conferir=docs_para_conferir,
         total=total,
         regulares=total - mutirantes,
         mutirantes=mutirantes,

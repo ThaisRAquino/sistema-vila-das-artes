@@ -46,8 +46,9 @@ def pasta_comprovantes():
     return pasta
 
 
-def salvar_comprovante(arquivo):
+def salvar_comprovante(arquivo, pasta=None):
     """Guarda o arquivo com nome aleatório (nunca o nome original) e devolve o nome salvo."""
+    pasta = pasta or pasta_comprovantes()
     if not arquivo or not arquivo.filename:
         return None, "Anexe a foto ou o PDF do comprovante."
     extensao = arquivo.filename.rsplit(".", 1)[-1].lower() if "." in arquivo.filename else ""
@@ -55,7 +56,7 @@ def salvar_comprovante(arquivo):
         return None, "Formato não aceito. Use uma foto (JPG, PNG ou HEIC) ou PDF."
     if extensao == "pdf":
         nome = f"{uuid.uuid4().hex}.pdf"
-        arquivo.save(os.path.join(pasta_comprovantes(), nome))
+        arquivo.save(os.path.join(pasta, nome))
         return nome, None
     # Foto: reduz para no máximo 1600 px e salva em JPG (cabe muito mais no servidor e apaga a localização da foto)
     from .imagens import abrir_foto
@@ -65,7 +66,7 @@ def salvar_comprovante(arquivo):
         return None, "Não foi possível abrir a imagem. Tire a foto de novo, escolha outra da galeria ou envie em PDF."
     imagem.thumbnail((1600, 1600))
     nome = f"{uuid.uuid4().hex}.jpg"
-    imagem.convert("RGB").save(os.path.join(pasta_comprovantes(), nome), "JPEG", quality=80, optimize=True)
+    imagem.convert("RGB").save(os.path.join(pasta, nome), "JPEG", quality=80, optimize=True)
     return nome, None
 
 

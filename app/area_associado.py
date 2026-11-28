@@ -19,7 +19,7 @@ from flask import (
 )
 
 from . import db, termo
-from .models import Assembleia, Associado, Mensalidade
+from .models import Assembleia, Associado, Documento, Mensalidade
 from .regras import competencia_atual, garantir_mensalidades, inicio_cobranca_extenso, proxima_assembleia, situacao
 from .seguranca import bloqueado, limpar, registrar_falha
 from .utils import cpf_valido, somente_digitos
@@ -222,6 +222,27 @@ def inicio(associado):
         presentes={p.assembleia_id for p in associado.presencas},
         inicio_cobranca=inicio_cobranca_extenso(),
     )
+
+
+@bp.route("/documentos/<int:documento_id>", methods=["POST"])
+@associado_required
+def enviar_documento(associado, documento_id):
+    """O associado anexa um documento que está faltando. Fica em análise até a equipe conferir."""
+    from .documentos import salvar_documento
+
+    documento = db.session.get(Documento, documento_id)
+    if not documento or documento.associado_id != associado.id:
+        abort(404)
+    if documento.status != "pendente":
+        flash("Este documento não está faltando.", "aviso")
+        return redirect(url_for("area.inicio") + "#documentos")
+    erro = salvar_documento(documento, request.files.get("arquivo"), pelo_associado=True)
+    if erro:
+        flash(erro, "erro")
+    else:
+        db.session.commit()
+        flash(f"{documento.tipo} enviado! A equipe vai conferir.", "ok")
+    return redirect(url_for("area.inicio") + "#documentos")
 
 
 @bp.route("/foto", methods=["POST"])

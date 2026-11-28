@@ -1,4 +1,4 @@
-"""Backup do sistema: banco de dados, fotos e comprovantes num único arquivo .zip com a data.
+"""Backup do sistema: banco de dados, fotos, comprovantes e documentos num único arquivo .zip com a data.
 
 Uso:
     python backup.py                 # cria backups/vila-das-artes-AAAA-MM-DD-HHMM.zip
@@ -35,7 +35,7 @@ def fazer_backup(manter=30):
             origem.close()
             alvo.close()
             zipado.write(copia, "instance/vila_das_artes.db")
-        for pasta in ("fotos", "comprovantes"):
+        for pasta in ("fotos", "comprovantes", "documentos"):
             caminho = os.path.join(INSTANCE, pasta)
             for raiz, _, arquivos in os.walk(caminho):
                 for arquivo in arquivos:

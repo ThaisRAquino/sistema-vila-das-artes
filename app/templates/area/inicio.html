@@ -56,6 +56,28 @@
   <p class="nota" style="margin: 10px 0 0">A mensalidade só aparece como paga depois que a equipe confere o comprovante.</p>
 </section>
 
+<section class="painel" id="documentos">
+  <h2>Meus documentos · {{ a.docs_entregues }} de {{ a.docs_total }}</h2>
+  <div class="lista-linhas">
+    {% for d in a.documentos %}
+    <div style="flex-wrap: wrap">
+      <span>{{ d.tipo }}{% if d.status == 'pendente' and d.motivo_recusa %}<br><span class="sub" style="margin:0; color: var(--risco-texto)">Recusado: {{ d.motivo_recusa }}. Envie de novo.</span>{% endif %}</span>
+      {% if d.status == 'entregue' %}<span class="etiqueta ok">● Entregue</span>
+      {% elif d.status == 'em_analise' %}<span class="etiqueta info">◔ Em análise</span>
+      {% else %}<span class="etiqueta pendente">◐ Falta enviar</span>{% endif %}
+      {% if d.status == 'pendente' %}
+      <form method="post" enctype="multipart/form-data" action="{{ url_for('area.enviar_documento', documento_id=d.id) }}" style="width: 100%; display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px">
+        <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+        <input type="file" name="arquivo" data-reduzir accept="image/*,application/pdf" aria-label="Foto ou PDF de {{ d.tipo }}" required style="flex: 1 1 180px; font-size: 13px">
+        <button class="btn btn-pequeno btn-primario" type="submit">Enviar documento</button>
+      </form>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  <p class="nota" style="margin: 10px 0 0">Tire uma foto nítida do documento inteiro ou envie em PDF. O documento só aparece como entregue depois que a equipe confere.</p>
+</section>
+
 <section class="painel">
   <h2>Presenças</h2>
   <div class="lista-linhas">
